@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="Уведомления">
+        <CheckBoxPreference
+            android:key="sound"
+            android:summary="Дублировать оповещения звуком"
+            android:title="Звук">
+        </CheckBoxPreference>
+        <CheckBoxPreference
+            android:key="vibration"
+            android:summary="Дублировать оповещения вибрацией"
+            android:title="Вибрация">
+        </CheckBoxPreference>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Устройство">
+        <ListPreference
+            android:key="device"
+            android:summary="%s"
+            android:title="Тип устройства"
+            android:entries="@array/device_types"
+            android:entryValues="@array/device_types_values"
+            android:defaultValue="1">
+        </ListPreference>
+    </PreferenceCategory>
+</PreferenceScreen>

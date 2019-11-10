@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="qtyoutTextColor">#1DD3B0</color>
+    <color name="mainTextColor">#EEF4D4</color>
+    <color name="errorsTextColor">#F4E409</color>
+</resources>

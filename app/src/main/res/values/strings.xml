@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Терминал</string>
+    <string name="shopInv">Инвентаризация Магазин</string>
+
+    <string name="action_settings">Настройки</string>
+    <string-array name="device_types">
+        <item>ALR_H450P</item>
+    </string-array>
+    <string-array name="device_types_values">
+        <item>1</item>
+    </string-array>
+
+    <string name="action_about">О программе</string>
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<resources>
+
+    <string name="app_name">Инвентаризация Магазин</string>
+
+    <string name="filesUtils">Загрузка/Выгрузка</string>
+
+    <string name="scanBut">Сканировать</string>
+
+    <string name="scanRFIDBut">Сканировать RFID</string>
+
+    <string name="uploadLeftovers">Выгрузить результат</string>
+
+</resources>

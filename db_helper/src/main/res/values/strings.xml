@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">FFDataManager</string>
+
+    <string name="loadData">Загрузить нуменклатуру</string>
+    <string name="uploadData">Выгрузить результат</string>
+    <string name="rebootResult">Сбросить результат</string>
+    <string name="clearDB">Очистить базу</string>
+    <string name="title_activity_db__file__manager">DB_File_Manager</string>
+
+    <string name="goodsFileTitle">Загрузка данных о товарах</string>
+    <string name="leftoversFileTitle">Загрузка остатков товаров</string>
+    <string name="markingcodesFileTitle">Загрузка кодов товаров</string>
+</resources>

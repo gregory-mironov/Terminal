@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.finnflare.terminal.alien.scanner.driver">
+
+    <application>
+        <activity android:name=".Alien_RFID_Scanner"/>
+        <activity android:name=".Alien_Barcode_Scanner"/>
+    </application>
+</manifest>

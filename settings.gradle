@@ -1,0 +1,2 @@
+include ':app', ':shop_inventarization', ':alien_scanner_driver', ':json-simple-1.1.1', ':db_helper', ':scanner_ui', ':idevice_scanner', ':alienapi'
+rootProject.name='Terminal'

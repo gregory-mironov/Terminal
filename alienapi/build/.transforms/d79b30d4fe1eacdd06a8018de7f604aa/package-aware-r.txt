@@ -1,0 +1,2 @@
+com.alien.rfid
+string app_name

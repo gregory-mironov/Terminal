@@ -258,30 +258,26 @@ public class DB_Files_Manager extends AppCompatActivity {
 
         @Override
         public void run() {
-            Log.v(TAG, "Start LEFTOVERS JSON uploading");
-
-            Bundle bundle = new Bundle();
-            bundle.putString("title", Tables.LEFTOVERS.UPLOAD_FILE_PROCESS_TITLE);
-            bundle.putBoolean("start", true);
-            Message msg = new Message();
-
-            String root = Environment.
-                    getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).
-                    getAbsolutePath();
-
-            ArrayList<JSONObject> jArrayList = new ArrayList<>();
-
             Cursor cursor = db_helper.getLeftoversForUpload();
 
             if (cursor.moveToFirst()) {
+                Log.v(TAG, "Start LEFTOVERS JSON uploading");
+
+                Bundle bundle = new Bundle();
                 bundle.putString("title", Tables.LEFTOVERS.UPLOAD_FILE_PROCESS_TITLE);
                 bundle.putInt("progress", cursor.getCount());
                 bundle.putBoolean("start", true);
+                Message msg = new Message();
                 msg.setData(bundle);
-
                 dbFileUtilsHandler.sendMessage(msg);
 
+                String root = Environment.
+                        getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).
+                        getAbsolutePath();
+
+                ArrayList<JSONObject> jArrayList = new ArrayList<>();
                 HashMap<String, String> jObjectMap = new HashMap<>();
+
                 int leftovers_count = 0, leftoversIter = (int) Math.ceil(cursor.getCount() / 100);
 
                 while (!cursor.isAfterLast()) {
@@ -303,7 +299,7 @@ public class DB_Files_Manager extends AppCompatActivity {
 
                     cursor.moveToNext();
 
-                    if( leftovers_count == leftoversIter){
+                    if (leftovers_count == leftoversIter) {
                         bundle = new Bundle();
                         bundle.putInt("progress", leftoversIter);
                         msg = new Message();
@@ -312,23 +308,25 @@ public class DB_Files_Manager extends AppCompatActivity {
                         leftovers_count = 0;
                     }
                 }
-            }
-            try {
-                FileWriter writer = new FileWriter(root + File.separator + Tables.LEFTOVERS.SAVE_FILE_NAME);
-                HashMap<String, ArrayList> jFile = new HashMap<>();
-                jFile.put(Tables.LEFTOVERS.TABLE_NAME, jArrayList);
-                writer.write(new JSONObject(jFile).toJSONString());
-                writer.flush();
-            } catch (IOException e) {
-                Log.v(TAG, "Error LEFTOVERS file writing : " + e.getMessage());
-            }
+                try {
+                    FileWriter writer = new FileWriter(root + File.separator + Tables.LEFTOVERS.SAVE_FILE_NAME);
+                    HashMap<String, ArrayList> jFile = new HashMap<>();
+                    jFile.put(Tables.LEFTOVERS.TABLE_NAME, jArrayList);
+                    writer.write(new JSONObject(jFile).toJSONString());
+                    writer.flush();
+                } catch (IOException e) {
+                    Log.v(TAG, "Error LEFTOVERS file writing : " + e.getMessage());
+                }
 
-            bundle = new Bundle();
-            bundle.putBoolean("stop", true);
-            msg = new Message();
-            msg.setData(bundle);
-            dbFileUtilsHandler.sendMessage(msg);
+                bundle = new Bundle();
+                bundle.putBoolean("stop", true);
+                msg = new Message();
+                msg.setData(bundle);
+                dbFileUtilsHandler.sendMessage(msg);
+            }
+            else{
 
+            }
             cursor.close();
             Log.v(TAG, "LEFTOVERS JSON uploading ended");
 
@@ -367,7 +365,7 @@ public class DB_Files_Manager extends AppCompatActivity {
             }
     );
 
-    Handler dbFileUtilsErrorHandler = new Handler(
+    Handler dbFileUtilsEventsHandler = new Handler(
         new Handler.Callback(){
             @Override
             public boolean handleMessage(@NonNull Message msg) {

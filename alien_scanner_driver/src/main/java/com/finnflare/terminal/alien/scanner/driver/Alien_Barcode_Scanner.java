@@ -63,17 +63,10 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
                         txtview = findViewById(R.id.goodSize);
                         txtview.setText(good.get("_SIZE"));
 
-                        if(!db_helper.increaseGoodLeftoversCount(
-                                good.get("_GUID"),
-                                good.get("_SN"),
-                                good.get("_RFID"))
-                        ) {
-                            if(db_helper.increaseGoodCountOverPlan(
-                                        good.get("_GUID"),
-                                        good.get("_SN"),
-                                        good.get("_RFID")) ||
-                                    db_helper.addGoodLeftoversCount(good)){
-                                txtview = (TextView) findViewById(R.id.wrongScanNum);
+                        int incr = db_helper.increaseGoodLeftoversCount(good);
+                        switch(incr){
+                            case 1:{
+                                txtview = findViewById(R.id.correctScanNum);
                                 txtview.setText(
                                         String.valueOf(
                                                 Integer.parseInt(
@@ -81,20 +74,19 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
                                                 ) + 1
                                         ));
                                 isAbleToDecrease = true;
+                                break;
                             }
-                            else{
-                                isAbleToDecrease = false;
+                            case 2:{
+                                txtview = findViewById(R.id.wrongScanNum);
+                                txtview.setText(
+                                        String.valueOf(
+                                                Integer.parseInt(
+                                                        txtview.getText().toString()
+                                                ) + 1
+                                        ));
+                                isAbleToDecrease = true;
+                                break;
                             }
-                        }
-                        else{
-                            txtview = findViewById(R.id.correctScanNum);
-                            txtview.setText(
-                                    String.valueOf(
-                                            Integer.parseInt(
-                                                    txtview.getText().toString()
-                                            ) + 1
-                                    ));
-                            isAbleToDecrease = true;
                         }
 
                         HashMap<String, Long> goodCount = db_helper.getGoodLeftoverCount(

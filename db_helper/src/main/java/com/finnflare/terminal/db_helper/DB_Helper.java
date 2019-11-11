@@ -91,13 +91,8 @@ public final class DB_Helper {
 
             cursor = db.query(GOODS.TABLE_NAME,
                     null,
-                    COLUMNS.COLUMN_GUID + " = ? and " +
-                            COLUMNS.COLUMN_SN + " = ?  and " +
-                            COLUMNS.COLUMN_RFID + " = ?",
-                    new String[]{
-                            goodInfo.get(COLUMNS.COLUMN_GUID),
-                            goodInfo.get(COLUMNS.COLUMN_SN),
-                            goodInfo.get(COLUMNS.COLUMN_RFID)},
+                    COLUMNS.COLUMN_GUID + " = ?",
+                    new String[]{goodInfo.get(COLUMNS.COLUMN_GUID)},
                     null,
                     null,
                     null
@@ -122,105 +117,77 @@ public final class DB_Helper {
                 );
             }
         }
+
+        if(!goodInfo.get(COLUMNS.COLUMN_GUID).equals("")){
+            goodInfo.put(COLUMNS.COLUMN_GTIN, "");
+        }
+
         cursor.close();
         return goodInfo;
     }
 
-    public boolean increaseGoodLeftoversCount(String _guid, String _sn, String _rfid){
+    public int increaseGoodLeftoversCount(HashMap<String, String> good){
         Cursor cursor = db.query(LEFTOVERS.TABLE_NAME,
                 new String[]{COLUMNS.COLUMN_QTYOUT, COLUMNS.COLUMN_QTYIN},
                 COLUMNS.COLUMN_GUID + " = ? and " +
                         COLUMNS.COLUMN_SN + " = ? and " +
-                        COLUMNS.COLUMN_RFID + " = ?",
-                new String[]{_guid, _sn, _rfid},
+                        COLUMNS.COLUMN_RFID + " = ? and " +
+                        COLUMNS.COLUMN_GTIN + " = ?",
+                new String[]{
+                        good.get(COLUMNS.COLUMN_GUID),
+                        good.get(COLUMNS.COLUMN_SN),
+                        good.get(COLUMNS.COLUMN_RFID),
+                        good.get(COLUMNS.COLUMN_GTIN)},
                 null,
                 null,
                 null
         );
 
-        boolean result = false;
+        int result = 3;
 
         if(cursor.moveToFirst()){
+            result = 2;
+
             int _qtyout = Integer.parseInt(
                     cursor.getString(cursor.getColumnIndex(COLUMNS.COLUMN_QTYOUT))
             );
             int _qtyin = Integer.parseInt(
                     cursor.getString(cursor.getColumnIndex(COLUMNS.COLUMN_QTYIN))
             );
-            if( (_qtyout == 0) || (_sn.equals("") && _rfid.equals("") && (_qtyout < _qtyin)) ){
+
+            if( (_qtyout == 0) || (good.get(COLUMNS.COLUMN_SN).equals("") &&
+                    good.get(COLUMNS.COLUMN_RFID).equals("")) ){
+
+                result = (_qtyout < _qtyin) ? 1 : 2;
+
                 ContentValues content = new ContentValues();
                 content.put(
                         COLUMNS.COLUMN_QTYOUT,
                         Integer.toString(_qtyout + 1)
                 );
+
                 long idRow = db.update(
                         LEFTOVERS.TABLE_NAME,
                         content,
                         COLUMNS.COLUMN_GUID + " = ? and " +
                                 COLUMNS.COLUMN_SN + " = ? and " +
-                                COLUMNS.COLUMN_RFID + " = ?",
-                        new String[]{_guid, _sn, _rfid});
-                result = (idRow != -1);
+                                COLUMNS.COLUMN_RFID + " = ? and " +
+                                COLUMNS.COLUMN_GTIN + " = ?",
+                        new String[]{
+                                good.get(COLUMNS.COLUMN_GUID),
+                                good.get(COLUMNS.COLUMN_SN),
+                                good.get(COLUMNS.COLUMN_RFID),
+                                good.get(COLUMNS.COLUMN_GTIN)});
+            }
+            else {
+                result = 0;
             }
         }
-        cursor.close();
-        return result;
-    }
 
-    public boolean increaseGoodCountOverPlan(String _guid, String _sn, String _rfid){
-        boolean result = false;
-        if(_sn.equals("") && _rfid.equals("")) {
-            Cursor cursor = db.query(LEFTOVERS.TABLE_NAME,
-                    new String[]{COLUMNS.COLUMN_QTYOUT, COLUMNS.COLUMN_QTYIN},
-                    COLUMNS.COLUMN_GUID + " = ? and " +
-                            COLUMNS.COLUMN_SN + " = ? and " +
-                            COLUMNS.COLUMN_RFID + " = ?",
-                    new String[]{_guid, _sn, _rfid},
-                    null,
-                    null,
-                    null
-            );
-            if (cursor.moveToFirst()) {
-                int _qtyout = Integer.parseInt(
-                        cursor.getString(cursor.getColumnIndex(COLUMNS.COLUMN_QTYOUT))
-                );
-                ContentValues content = new ContentValues();
-                content.put(
-                        COLUMNS.COLUMN_QTYOUT,
-                        Integer.toString(_qtyout + 1)
-                );
-                long idRow = db.update(
-                        LEFTOVERS.TABLE_NAME,
-                        content,
-                        COLUMNS.COLUMN_GUID + " = ? and " + COLUMNS.COLUMN_SN + " = ?",
-                        new String[]{_guid, _sn});
-                result = (idRow != -1);
-            }
-            cursor.close();
-        }
-        return result;
-    }
-
-    public boolean addGoodLeftoversCount(HashMap<String, String> good){
-        boolean res = false;
-        Cursor cursor = db.rawQuery("SELECT * FROM " + LEFTOVERS.TABLE_NAME +
-                " WHERE " +
-                COLUMNS.COLUMN_GUID + " = ? and " +
-                COLUMNS.COLUMN_SN + " = ? and " +
-                COLUMNS.COLUMN_RFID + " = ?" ,
-                new String[]{
-                    good.get(COLUMNS.COLUMN_GUID),
-                    good.get(COLUMNS.COLUMN_SN),
-                    good.get(COLUMNS.COLUMN_RFID)
-                });
-
-        if(!cursor.moveToFirst()) {
+        if(result == 3){
             ContentValues content = new ContentValues();
             content.put(COLUMNS.COLUMN_GUID, good.get(COLUMNS.COLUMN_GUID));
-            content.put(COLUMNS.COLUMN_GTIN,
-                    !good.get(COLUMNS.COLUMN_SN).equals("") ||
-                    !good.get(COLUMNS.COLUMN_RFID).equals("") ||
-                    good.get(COLUMNS.COLUMN_GUID).equals("") ? good.get(COLUMNS.COLUMN_GTIN) : "");
+            content.put(COLUMNS.COLUMN_GTIN, good.get(COLUMNS.COLUMN_GTIN));
             content.put(COLUMNS.COLUMN_SN, good.get(COLUMNS.COLUMN_SN));
             content.put(COLUMNS.COLUMN_RFID, good.get(COLUMNS.COLUMN_RFID));
             content.put(COLUMNS.COLUMN_QTYOUT, Integer.toString(1));
@@ -229,10 +196,11 @@ public final class DB_Helper {
                     null,
                     content
             );
-            res = (idRow != -1);
+            result = 2;
         }
+
         cursor.close();
-        return res;
+        return result;
     }
 
     public HashMap<String, Long> getGoodLeftoverCount(String _guid, String _sn){
@@ -260,14 +228,17 @@ public final class DB_Helper {
     }
 
     public void decreaseGoodLeftoverCount(HashMap<String, String> good){
-        try{
         Cursor cursor = db.query(LEFTOVERS.TABLE_NAME,
                 new String[]{COLUMNS.COLUMN_QTYOUT, COLUMNS.COLUMN_QTYIN},
                 COLUMNS.COLUMN_GUID + " = ? and " +
-                        COLUMNS.COLUMN_SN + " = ?",
+                        COLUMNS.COLUMN_SN + " = ? and " +
+                        COLUMNS.COLUMN_RFID + " = ? and " +
+                        COLUMNS.COLUMN_GTIN + " = ?",
                 new String[]{
                         good.get(COLUMNS.COLUMN_GUID),
-                        good.get(COLUMNS.COLUMN_SN)
+                        good.get(COLUMNS.COLUMN_SN),
+                        good.get(COLUMNS.COLUMN_RFID),
+                        good.get(COLUMNS.COLUMN_GTIN)
                 },
                 null,
                 null,
@@ -283,10 +254,15 @@ public final class DB_Helper {
             );
             if(_qtyout == 1 && _qtyin == 0){
                 db.delete(LEFTOVERS.TABLE_NAME,
-                        COLUMNS.COLUMN_GUID + " = ? and " + COLUMNS.COLUMN_SN + " = ?",
+                        COLUMNS.COLUMN_GUID + " = ? and " +
+                                COLUMNS.COLUMN_SN + " = ? and " +
+                                COLUMNS.COLUMN_RFID + " = ? and " +
+                                COLUMNS.COLUMN_GTIN + " = ?",
                         new String[]{
                                 good.get(COLUMNS.COLUMN_GUID),
-                                good.get(COLUMNS.COLUMN_SN)
+                                good.get(COLUMNS.COLUMN_SN),
+                                good.get(COLUMNS.COLUMN_RFID),
+                                good.get(COLUMNS.COLUMN_GTIN)
                         });
             }
             else {
@@ -298,17 +274,19 @@ public final class DB_Helper {
                 int idRow = db.update(
                         LEFTOVERS.TABLE_NAME,
                         content,
-                        COLUMNS.COLUMN_GUID + " = ? and " + COLUMNS.COLUMN_SN + " = ?",
+                        COLUMNS.COLUMN_GUID + " = ? and " +
+                                COLUMNS.COLUMN_SN + " = ? and " +
+                                COLUMNS.COLUMN_RFID + " = ? and " +
+                                COLUMNS.COLUMN_GTIN + " = ?",
                         new String[]{
                                 good.get(COLUMNS.COLUMN_GUID),
-                                good.get(COLUMNS.COLUMN_SN)
+                                good.get(COLUMNS.COLUMN_SN),
+                                good.get(COLUMNS.COLUMN_RFID),
+                                good.get(COLUMNS.COLUMN_GTIN)
                         });
             }
         }
-        cursor.close();}
-        catch(Exception e){
-            Log.v(TAG, e.toString());
-        }
+        cursor.close();
     }
 
     Cursor getLeftoversForUpload(){

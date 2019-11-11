@@ -58,6 +58,7 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
 
         TextView txtview = findViewById(R.id.planScanNum);
         txtview.setText(String.valueOf(Counts.get("total")));
+
         txtview = findViewById(R.id.correctScanNum);
         txtview.setText(String.valueOf(Counts.get("correct")));
 
@@ -90,16 +91,18 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
             HashMap<String, String> good = db_helper.getGoodInfo(scanData);
 
             Bundle bundle = new Bundle();
-            if(!db_helper.increaseGoodLeftoversCount(
-                    good.get("_GUID"),
-                    good.get("_SN"),
-                    good.get("_RFID"))
-            ) {
-                if(db_helper.addGoodLeftoversCount(good))
+
+            int incr = db_helper.increaseGoodLeftoversCount(good);
+            switch(incr){
+                case 1:{
+                    bundle.putString("increment", "correct");
+                    break;
+                }
+                case 2:{
                     bundle.putString("increment", "wrong");
+                    break;
+                }
             }
-            else
-                bundle.putString("increment", "correct");
 
             Message msg = new Message();
             msg.setData(bundle);

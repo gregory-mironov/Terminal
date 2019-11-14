@@ -70,10 +70,42 @@ public class DB_Files_Manager extends AppCompatActivity {
 
     public void onResetScan(View view){
         db_helper.resetScanRes();
+        aldBuilder.setTitle("Сброс")
+                .setMessage("Остатки сброшены")
+                .setCancelable(false)
+                .setNegativeButton("Закрыть",
+                        new DialogInterface.OnClickListener(){
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        }).show();
+    }
+
+    public void onClearScan(View view){
+        db_helper.clearScanRes();
+        aldBuilder.setTitle("Очистка")
+                .setMessage("Остатки удалены")
+                .setCancelable(false)
+                .setNegativeButton("Закрыть",
+                        new DialogInterface.OnClickListener(){
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        }).show();
     }
 
     public void onClearDB(View view){
         db_helper.clearDB();
+
+        aldBuilder.setTitle("Очистка базы")
+                .setMessage("Очистка завершена")
+                .setCancelable(false)
+                .setNegativeButton("Закрыть",
+                        new DialogInterface.OnClickListener(){
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        }).show();
     }
 
     private Runnable loadFilesForDB = new Runnable() {
@@ -91,7 +123,7 @@ public class DB_Files_Manager extends AppCompatActivity {
                     getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).
                     getAbsolutePath();
 
-            boolean progressBarIsShown = false;
+            boolean progressBarIsShown = false, isFileLoaded = false;
 
             //----- GOODS loading
             try {
@@ -133,6 +165,7 @@ public class DB_Files_Manager extends AppCompatActivity {
                     }
                 }
                 reader.close();
+                isFileLoaded = true;
                 new File(root + File.separator + Tables.GOODS.LOAD_FILE_NAME).delete();
             } catch (FileNotFoundException e) {
                 Log.v(TAG, "Error GOODS file not found : " + e.toString());
@@ -184,6 +217,7 @@ public class DB_Files_Manager extends AppCompatActivity {
                     }
                 }
                 reader.close();
+                isFileLoaded = true;
                 new File(root + File.separator + Tables.LEFTOVERS.LOAD_FILE_NAME).delete();
             } catch (FileNotFoundException e) {
                 Log.v(TAG, "Error LEFTOVERS file not found : " + e.toString());
@@ -233,7 +267,7 @@ public class DB_Files_Manager extends AppCompatActivity {
                         }
                     }
                 }
-
+                isFileLoaded = true;
                 reader.close();
                 new File(root + File.separator + Tables.MARKING_CODES.LOAD_FILE_NAME).delete();
             } catch (FileNotFoundException e) {
@@ -244,11 +278,73 @@ public class DB_Files_Manager extends AppCompatActivity {
                 Log.v(TAG, "Error parsing MARKING_CODES JSON : " + e.toString());
             }
 
+            //----- STATES loading
+            try {
+                Log.v(TAG, "Start STATES JSON loading");
+                reader = new FileReader(root + File.separator + Tables.STATES.LOAD_FILE_NAME);
+
+                JSONParser parser = new JSONParser();
+                jObject = (JSONObject) parser.parse(reader);
+
+                jArray = (JSONArray) jObject.get(Tables.STATES.TABLE_NAME);
+
+                if(jArray != null) {
+                    bundle = new Bundle();
+                    bundle.putString("title", Tables.STATES.LOAD_FILE_PROCESS_TITLE);
+                    bundle.putInt("progress", jArray.size());
+                    if (!progressBarIsShown) {
+                        bundle.putBoolean("start", true);
+                        progressBarIsShown = true;
+                    }
+                    msg = new Message();
+                    msg.setData(bundle);
+                    dbFileUtilsHandler.sendMessage(msg);
+
+                    db_helper.truncateSTATES();
+
+                    int leftovers_count = 0, leftoversIter = (int) Math.ceil(jArray.size() / 100);
+
+                    for (Object o : jArray) {
+                        leftovers_count++;
+
+                        db_helper.putJSONObjectToTable((JSONObject) o, Tables.STATES.TABLE_NAME);
+
+                        if( leftovers_count == leftoversIter){
+                            bundle = new Bundle();
+                            bundle.putInt("progress", leftoversIter);
+                            msg = new Message();
+                            msg.setData(bundle);
+                            dbFileUtilsHandler.sendMessage(msg);
+                            leftovers_count = 0;
+                        }
+                    }
+                }
+                reader.close();
+                isFileLoaded = true;
+                new File(root + File.separator + Tables.STATES.LOAD_FILE_NAME).delete();
+            } catch (FileNotFoundException e) {
+                Log.v(TAG, "Error LEFTOVERS file not found : " + e.toString());
+            } catch (IOException e) {
+                Log.v(TAG, "Error LEFTOVERS file reading : " + e.toString());
+            } catch (ParseException e) {
+                Log.v(TAG, "Error parsing LEFTOVERS JSON : " + e.toString());
+            }
+
             bundle = new Bundle();
             bundle.putBoolean("stop", true);
             msg = new Message();
             msg.setData(bundle);
             dbFileUtilsHandler.sendMessage(msg);
+
+            bundle = new Bundle();
+            bundle.putString("title", "Загрузка");
+            if(isFileLoaded)
+                bundle.putString("text", "Загрузка файлов завершена");
+            else
+                bundle.putString("text", "Файлы для загрузки не найдены или повреждены");
+            msg = new Message();
+            msg.setData(bundle);
+            dbFileUtilsEventsHandler.sendMessage(msg);
 
             Log.v(TAG, "Files loading process finished");
         }
@@ -259,15 +355,18 @@ public class DB_Files_Manager extends AppCompatActivity {
         @Override
         public void run() {
             Cursor cursor = db_helper.getLeftoversForUpload();
+            Bundle bundle;
+            Message msg;
+            boolean isUploaded = false;
 
             if (cursor.moveToFirst()) {
                 Log.v(TAG, "Start LEFTOVERS JSON uploading");
 
-                Bundle bundle = new Bundle();
+                bundle = new Bundle();
                 bundle.putString("title", Tables.LEFTOVERS.UPLOAD_FILE_PROCESS_TITLE);
                 bundle.putInt("progress", cursor.getCount());
                 bundle.putBoolean("start", true);
-                Message msg = new Message();
+                msg = new Message();
                 msg.setData(bundle);
                 dbFileUtilsHandler.sendMessage(msg);
 
@@ -314,6 +413,8 @@ public class DB_Files_Manager extends AppCompatActivity {
                     jFile.put(Tables.LEFTOVERS.TABLE_NAME, jArrayList);
                     writer.write(new JSONObject(jFile).toJSONString());
                     writer.flush();
+
+                    isUploaded = true;
                 } catch (IOException e) {
                     Log.v(TAG, "Error LEFTOVERS file writing : " + e.getMessage());
                 }
@@ -324,10 +425,18 @@ public class DB_Files_Manager extends AppCompatActivity {
                 msg.setData(bundle);
                 dbFileUtilsHandler.sendMessage(msg);
             }
-            else{
-
-            }
             cursor.close();
+
+            bundle = new Bundle();
+            bundle.putString("title", "Выгрузка");
+            if(isUploaded)
+                bundle.putString("text", "Выгрузка завершена");
+            else
+                bundle.putString("text", "Ошибка выгрузки");
+
+            msg = new Message();
+            msg.setData(bundle);
+            dbFileUtilsEventsHandler.sendMessage(msg);
             Log.v(TAG, "LEFTOVERS JSON uploading ended");
 
         }
@@ -372,14 +481,14 @@ public class DB_Files_Manager extends AppCompatActivity {
                 Bundle bundle = msg.getData();
 
                 aldBuilder.setTitle(bundle.getString("title"))
-                        .setMessage(bundle.getString("msg"))
+                        .setMessage(bundle.getString("text"))
                         .setCancelable(false)
                         .setNegativeButton("Закрыть",
                                 new DialogInterface.OnClickListener(){
                                     public void onClick(DialogInterface dialog, int id) {
                                         dialog.cancel();
                                     }
-                                });
+                                }).show();
 
                 return true;
             }

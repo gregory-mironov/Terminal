@@ -18,6 +18,7 @@ final class Tables {
         static final String COLUMN_MODEL = "_MODEL";
         static final String COLUMN_COLOR = "_COLOR";
         static final String COLUMN_SIZE = "_SIZE";
+        static final String COLUMN_STATE = "_STATE";
 
         static final String COLUMN_QTYIN = "_QTYIN";
         static final String COLUMN_QTYOUT = "_QTYOUT";
@@ -92,5 +93,18 @@ final class Tables {
         static final String TRUNCATE_TABLE = "DELETE FROM " + TABLE_NAME + ";";
         static final String LOAD_FILE_NAME = "ff.inv.marking_codes.json";
         static final String LOAD_FILE_PROCESS_TITLE = "Загрузка кодов товаров";
+    }
+
+    static abstract class STATES implements BaseColumns{
+        static final String TABLE_NAME = "STATES";
+
+        static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS " +
+                TABLE_NAME + " ( " +
+                COLUMNS.COLUMN_GUID + " VARCHAR (36) PRIMARY KEY, " +
+                COLUMNS.COLUMN_STATE + " VARCHAR (80)";
+
+        static final String TRUNCATE_TABLE = "DELETE FROM " + TABLE_NAME + ";";
+        static final String LOAD_FILE_NAME = "ff.inv.states.json";
+        static final String LOAD_FILE_PROCESS_TITLE = "Загрузка характеристик товаров";
     }
 }

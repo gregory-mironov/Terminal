@@ -35,6 +35,7 @@ public final class DB_Helper {
         goodInfo.put(COLUMNS.COLUMN_MODEL, "");
         goodInfo.put(COLUMNS.COLUMN_SIZE, "");
         goodInfo.put(COLUMNS.COLUMN_COLOR, "");
+        goodInfo.put(COLUMNS.COLUMN_STATE, "");
         goodInfo.put(
                 COLUMNS.COLUMN_GTIN,
                 _data.get(COLUMNS.COLUMN_GTIN)
@@ -318,6 +319,7 @@ public final class DB_Helper {
     }
 
     //-----
+
     public HashMap<String, String> decodeScanResult(String scanResult){
         return decoder.decodeScanResult(scanResult);
     }
@@ -393,39 +395,58 @@ public final class DB_Helper {
 
                 break;
             }
-        }
+            case STATES.TABLE_NAME:{
+                content = new ContentValues();
 
+                content.put(Tables.COLUMNS.COLUMN_GUID, (String) jObject.get(Tables.COLUMNS.COLUMN_GUID));
+                content.put(COLUMNS.COLUMN_STATE, jObject.get(COLUMNS.COLUMN_STATE) == null ?
+                                "" : (String) jObject.get(COLUMNS.COLUMN_STATE)
+                );
+                int idRow = (int) db.insert(Tables.STATES.TABLE_NAME,
+                        null,
+                        content
+                );
+
+                break;
+            }
+        }
     }
+
     //-----
 
     void resetScanRes(){
         ContentValues content = new ContentValues();
         content.put(COLUMNS.COLUMN_QTYOUT, 0);
+        db.delete(LEFTOVERS.TABLE_NAME,
+                COLUMNS.COLUMN_QTYIN + " = 0",
+                null);
+
         db.update(LEFTOVERS.TABLE_NAME,
                 content,
-                null,
+                COLUMNS.COLUMN_QTYOUT + " <> 0",
                 null);
     }
 
-    void clearDB(){
-        truncateGOODS();
+    void clearScanRes(){
         truncateLEFTOVERS();
-        truncateMARCING_CODES();
     }
 
+    void clearDB(){
+        db.execSQL(GOODS.TRUNCATE_TABLE);
+        db.execSQL(LEFTOVERS.TRUNCATE_TABLE);
+        db.execSQL(MARKING_CODES.TRUNCATE_TABLE);
+        db.execSQL(STATES.TRUNCATE_TABLE);
+    }
 
     void truncateLEFTOVERS(){
         db.execSQL(LEFTOVERS.TRUNCATE_TABLE);
-    }
-
-    void truncateGOODS(){
-        db.execSQL(GOODS.TRUNCATE_TABLE);
     }
 
     void truncateMARCING_CODES(){
         db.execSQL(MARKING_CODES.TRUNCATE_TABLE);
     }
 
+    void truncateSTATES(){db.execSQL(STATES.TRUNCATE_TABLE);}
     public void closeDB(){
         db.close();
         Log.v(TAG, "DataBase closed");

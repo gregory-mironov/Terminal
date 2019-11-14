@@ -49,6 +49,15 @@
                 android:text="@string/rebootResult" />
 
             <Button
+                android:id="@+id/clearLOButton"
+                android:layout_width="300dp"
+                android:layout_height="70dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="35dp"
+                android:onClick="onClearScan"
+                android:text="@string/clearResult" />
+
+            <Button
                 android:id="@+id/clearDBButton"
                 android:layout_width="300dp"
                 android:layout_height="70dp"

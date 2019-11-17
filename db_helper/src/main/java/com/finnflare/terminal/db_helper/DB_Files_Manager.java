@@ -43,7 +43,6 @@ public class DB_Files_Manager extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         db_helper = new DB_Helper(this);
-
         pd = new ProgressDialog(this);
         pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         pd.setCanceledOnTouchOutside(false);
@@ -135,7 +134,6 @@ public class DB_Files_Manager extends AppCompatActivity {
 
                 jArray = (JSONArray) jObject.get(Tables.GOODS.TABLE_NAME);
                 if(jArray != null) {
-                    Log.v(TAG, String.valueOf(jArray.size()));
                     bundle = new Bundle();
                     bundle.putString("title", Tables.GOODS.LOAD_FILE_PROCESS_TITLE);
                     bundle.putInt("progress", jArray.size());
@@ -388,6 +386,8 @@ public class DB_Files_Manager extends AppCompatActivity {
                             cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_GTIN)));
                     jObjectMap.put(Tables.COLUMNS.COLUMN_SN,
                             cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_SN)));
+                    jObjectMap.put(Tables.COLUMNS.COLUMN_STATE,
+                            cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_STATE)));
                     jObjectMap.put(Tables.COLUMNS.COLUMN_RFID,
                             cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_RFID)));
                     jObjectMap.put(Tables.COLUMNS.COLUMN_QTYIN,

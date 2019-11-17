@@ -1,9 +1,16 @@
 package com.finnflare.terminal.alien.scanner.driver;
 
+import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -17,6 +24,8 @@ import com.alien.rfid.Tag;
 import com.finnflare.terminal.db_helper.DB_Helper;
 
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallback {
 
@@ -41,6 +50,8 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
             return true;
         }
     });
+
+    private long LastScanTime = 0;
 
     private Alien_RFID_Scanner_Utils scanner;
     private DB_Helper db_helper;
@@ -83,7 +94,6 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
         }
     }
 
-
     public void onTagRead(Tag tag) {
         HashMap<String, String> scanData = db_helper.decodeScanResult(tag.getEPC());
         if(scanData != null){
@@ -93,13 +103,51 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
             Bundle bundle = new Bundle();
 
             int incr = db_helper.increaseGoodLeftoversCount(good);
+
             switch(incr){
                 case 1:{
                     bundle.putString("increment", "correct");
+                    if ( System.currentTimeMillis() - LastScanTime >= 1500) {
+                        LastScanTime = System.currentTimeMillis();
+                        Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                        if( v != null){
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+                            } else {
+                                v.vibrate(500);
+                            }
+                        }
+                        try {
+                            Uri notify = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notify);
+                            r.play();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
                     break;
                 }
                 case 2:{
                     bundle.putString("increment", "wrong");
+                    if ( System.currentTimeMillis() - LastScanTime >= 1500) {
+                        LastScanTime = System.currentTimeMillis();
+                        Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                        if( v != null) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+                            } else {
+                                v.vibrate(500);
+                            }
+                        }
+                        try {
+                            Uri notify = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notify);
+                            r.play();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    }
                     break;
                 }
             }

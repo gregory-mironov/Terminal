@@ -6,4 +6,5 @@
     <string name="fullGoodName">Полное название</string>
     <string name="goodColorText">Цвет</string>
     <string name="goodSizeText">Размер</string>
+    <string name="gootStateText">Состояние</string>
 </resources>

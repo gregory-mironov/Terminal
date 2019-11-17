@@ -19,6 +19,7 @@ final class Tables {
         static final String COLUMN_COLOR = "_COLOR";
         static final String COLUMN_SIZE = "_SIZE";
         static final String COLUMN_STATE = "_STATE";
+        static final String COLUMN_STATE_NAME = "_STATE_NAME";
 
         static final String COLUMN_QTYIN = "_QTYIN";
         static final String COLUMN_QTYOUT = "_QTYOUT";
@@ -55,6 +56,7 @@ final class Tables {
                 COLUMNS.COLUMN_GUID +  " VARCHAR (36) NOT NULL, " +
                 COLUMNS.COLUMN_GTIN +  " VARCHAR (50), " +
                 COLUMNS.COLUMN_SN + " VARCHAR (20), " +
+                COLUMNS.COLUMN_STATE + " VARCHAR (36), " +
                 COLUMNS.COLUMN_RFID + " VARCHAR (40), " +
                 COLUMNS.COLUMN_QTYIN + " INTEGER DEFAULT (0), " +
                 COLUMNS.COLUMN_QTYOUT +  " INTEGER DEFAULT (0), " +
@@ -82,6 +84,7 @@ final class Tables {
                 TABLE_NAME + " ( " +
                 COLUMNS.COLUMN_GTIN +  " VARCHAR (50), " +
                 COLUMNS.COLUMN_SN +  " VARCHAR (20), " +
+                COLUMNS.COLUMN_STATE +  " VARCHAR (36), " +
                 COLUMNS.COLUMN_GUID + " VARCHAR (36), " +
                 COLUMNS.COLUMN_RFID + " VARCHAR (40), " +
                 "CONSTRAINT " + TABLE_PK + " PRIMARY KEY ( " +
@@ -100,8 +103,8 @@ final class Tables {
 
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS " +
                 TABLE_NAME + " ( " +
-                COLUMNS.COLUMN_GUID + " VARCHAR (36) PRIMARY KEY, " +
-                COLUMNS.COLUMN_STATE + " VARCHAR (80)";
+                COLUMNS.COLUMN_STATE + " VARCHAR (36) PRIMARY KEY, " +
+                COLUMNS.COLUMN_STATE_NAME + " VARCHAR (80) );";
 
         static final String TRUNCATE_TABLE = "DELETE FROM " + TABLE_NAME + ";";
         static final String LOAD_FILE_NAME = "ff.inv.states.json";

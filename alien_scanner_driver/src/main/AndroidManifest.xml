@@ -1,8 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.finnflare.terminal.alien.scanner.driver">
 
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application>
-        <activity android:name=".Alien_RFID_Scanner"/>
-        <activity android:name=".Alien_Barcode_Scanner"/>
+        <activity android:name=".Alien_Barcode_Scanner"></activity>
+        <activity android:name=".Alien_RFID_Scanner" />
     </application>
+
 </manifest>

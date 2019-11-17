@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.finnflare.terminal.inventarization.shop">
 
+    <uses-permission android:name="android.permission.VIBRATE" />
     <application>
         <activity android:name=".Shop_Inv_Main"/>
     </application>

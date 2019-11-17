@@ -20,7 +20,7 @@ final class DB_Open_Helper extends SQLiteOpenHelper {
         db.execSQL(GOODS.CREATE_TABLE);
         db.execSQL(LEFTOVERS.CREATE_TABLE);
         db.execSQL(MARKING_CODES.CREATE_TABLE);
-
+        db.execSQL(STATES.CREATE_TABLE);
     }
 
     @Override

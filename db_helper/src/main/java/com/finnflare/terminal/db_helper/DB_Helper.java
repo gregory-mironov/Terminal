@@ -34,8 +34,9 @@ public final class DB_Helper {
         goodInfo.put(COLUMNS.COLUMN_NAME, "");
         goodInfo.put(COLUMNS.COLUMN_MODEL, "");
         goodInfo.put(COLUMNS.COLUMN_SIZE, "");
-        goodInfo.put(COLUMNS.COLUMN_COLOR, "");
         goodInfo.put(COLUMNS.COLUMN_STATE, "");
+        goodInfo.put(COLUMNS.COLUMN_STATE_NAME, "");
+        goodInfo.put(COLUMNS.COLUMN_COLOR, "");
         goodInfo.put(
                 COLUMNS.COLUMN_GTIN,
                 _data.get(COLUMNS.COLUMN_GTIN)
@@ -49,9 +50,11 @@ public final class DB_Helper {
                 _data.get(COLUMNS.COLUMN_RFID)
         );
 
+
         Cursor cursor = db.query(MARKING_CODES.TABLE_NAME,
                 new String[]{
-                        COLUMNS.COLUMN_GUID
+                        COLUMNS.COLUMN_GUID,
+                        COLUMNS.COLUMN_STATE
                 },
                 COLUMNS.COLUMN_GTIN + " = ? and " +
                         COLUMNS.COLUMN_SN + " = ?  and " +
@@ -90,6 +93,35 @@ public final class DB_Helper {
                 )
             );
 
+            if(cursor.getColumnIndex(COLUMNS.COLUMN_STATE) != -1) {
+                goodInfo.put(COLUMNS.COLUMN_STATE,
+                        cursor.getString(
+                                cursor.getColumnIndex(
+                                        COLUMNS.COLUMN_STATE
+                                )
+                        )
+                );
+            }
+
+            if(goodInfo.get(COLUMNS.COLUMN_SN).equals("")) {
+                cursor = db.rawQuery(
+                        "SELECT " + COLUMNS.COLUMN_GTIN + " FROM " +
+                        MARKING_CODES.TABLE_NAME + " WHERE " +
+                        COLUMNS.COLUMN_GUID + " = '" + goodInfo.get(COLUMNS.COLUMN_GUID) + "' AND " +
+                        COLUMNS.COLUMN_STATE + " = '" + goodInfo.get(COLUMNS.COLUMN_STATE) +
+                        "' ORDER BY " + COLUMNS.COLUMN_GTIN + " DESC LIMIT 1;",
+                        null);
+
+                if(cursor.moveToFirst()){
+                    goodInfo.put(COLUMNS.COLUMN_GTIN,
+                            cursor.getString(
+                                    cursor.getColumnIndex(
+                                            COLUMNS.COLUMN_GTIN
+                                    )
+                            )
+                    );
+                }
+            }
             cursor = db.query(GOODS.TABLE_NAME,
                     null,
                     COLUMNS.COLUMN_GUID + " = ?",
@@ -99,7 +131,6 @@ public final class DB_Helper {
                     null
             );
             if(cursor.moveToFirst()) {
-
                 goodInfo.put(
                         COLUMNS.COLUMN_NAME,
                         cursor.getString(cursor.getColumnIndex(COLUMNS.COLUMN_NAME))
@@ -116,11 +147,28 @@ public final class DB_Helper {
                         COLUMNS.COLUMN_COLOR,
                         cursor.getString(cursor.getColumnIndex(COLUMNS.COLUMN_COLOR))
                 );
-            }
-        }
 
-        if(!goodInfo.get(COLUMNS.COLUMN_GUID).equals("")){
-            goodInfo.put(COLUMNS.COLUMN_GTIN, "");
+                if(!goodInfo.get(COLUMNS.COLUMN_STATE).equals("")){
+                    cursor = db.query(STATES.TABLE_NAME,
+                            new String[]{COLUMNS.COLUMN_STATE_NAME},
+                            COLUMNS.COLUMN_STATE + " = ?",
+                            new String[]{goodInfo.get(COLUMNS.COLUMN_STATE)},
+                            null,
+                            null,
+                            null
+                    );
+                    if(cursor.moveToFirst()){
+                        goodInfo.put(COLUMNS.COLUMN_STATE_NAME,
+                                cursor.getString(
+                                        cursor.getColumnIndex(
+                                                COLUMNS.COLUMN_STATE_NAME
+                                        )
+                                )
+                        );
+                    }
+                }
+            }
+
         }
 
         cursor.close();
@@ -133,16 +181,20 @@ public final class DB_Helper {
                 COLUMNS.COLUMN_GUID + " = ? and " +
                         COLUMNS.COLUMN_SN + " = ? and " +
                         COLUMNS.COLUMN_RFID + " = ? and " +
-                        COLUMNS.COLUMN_GTIN + " = ?",
+                        COLUMNS.COLUMN_GTIN + " = ? and " +
+                        COLUMNS.COLUMN_STATE + " = ?",
                 new String[]{
                         good.get(COLUMNS.COLUMN_GUID),
                         good.get(COLUMNS.COLUMN_SN),
                         good.get(COLUMNS.COLUMN_RFID),
-                        good.get(COLUMNS.COLUMN_GTIN)},
+                        good.get(COLUMNS.COLUMN_GTIN),
+                        good.get(COLUMNS.COLUMN_STATE)},
                 null,
                 null,
                 null
         );
+
+        Log.v(TAG, "Trying to find leftover");
 
         int result = 3;
 
@@ -155,7 +207,7 @@ public final class DB_Helper {
             int _qtyin = Integer.parseInt(
                     cursor.getString(cursor.getColumnIndex(COLUMNS.COLUMN_QTYIN))
             );
-
+            Log.v(TAG, "Before increasing");
             if( (_qtyout == 0) || (good.get(COLUMNS.COLUMN_SN).equals("") &&
                     good.get(COLUMNS.COLUMN_RFID).equals("")) ){
 
@@ -173,12 +225,15 @@ public final class DB_Helper {
                         COLUMNS.COLUMN_GUID + " = ? and " +
                                 COLUMNS.COLUMN_SN + " = ? and " +
                                 COLUMNS.COLUMN_RFID + " = ? and " +
-                                COLUMNS.COLUMN_GTIN + " = ?",
+                                COLUMNS.COLUMN_GTIN + " = ? and " +
+                                COLUMNS.COLUMN_STATE + " = ?",
                         new String[]{
                                 good.get(COLUMNS.COLUMN_GUID),
                                 good.get(COLUMNS.COLUMN_SN),
                                 good.get(COLUMNS.COLUMN_RFID),
-                                good.get(COLUMNS.COLUMN_GTIN)});
+                                good.get(COLUMNS.COLUMN_GTIN),
+                                good.get(COLUMNS.COLUMN_STATE)
+                        });
             }
             else {
                 result = 0;
@@ -186,10 +241,12 @@ public final class DB_Helper {
         }
 
         if(result == 3){
+            Log.v(TAG, "We need to add it");
             ContentValues content = new ContentValues();
             content.put(COLUMNS.COLUMN_GUID, good.get(COLUMNS.COLUMN_GUID));
             content.put(COLUMNS.COLUMN_GTIN, good.get(COLUMNS.COLUMN_GTIN));
             content.put(COLUMNS.COLUMN_SN, good.get(COLUMNS.COLUMN_SN));
+            content.put(COLUMNS.COLUMN_STATE, good.get(COLUMNS.COLUMN_STATE));
             content.put(COLUMNS.COLUMN_RFID, good.get(COLUMNS.COLUMN_RFID));
             content.put(COLUMNS.COLUMN_QTYOUT, Integer.toString(1));
             content.put(COLUMNS.COLUMN_TIME, "");
@@ -204,12 +261,21 @@ public final class DB_Helper {
         return result;
     }
 
-    public HashMap<String, Long> getGoodLeftoverCount(String _guid, String _sn){
+    public HashMap<String, Long> getGoodLeftoverCount(HashMap<String, String> good){
         Cursor cursor = db.query(LEFTOVERS.TABLE_NAME,
                 new String[]{COLUMNS.COLUMN_QTYOUT, COLUMNS.COLUMN_QTYIN},
                 COLUMNS.COLUMN_GUID + " = ? and " +
-                        COLUMNS.COLUMN_SN + " = ?",
-                new String[]{_guid, _sn},
+                        COLUMNS.COLUMN_SN + " = ? and " +
+                        COLUMNS.COLUMN_STATE + " = ? and " +
+                        COLUMNS.COLUMN_RFID + " = ? and " +
+                        COLUMNS.COLUMN_GTIN + " = ?",
+                new String[]{
+                        good.get(COLUMNS.COLUMN_GUID),
+                        good.get(COLUMNS.COLUMN_SN),
+                        good.get(COLUMNS.COLUMN_STATE),
+                        good.get(COLUMNS.COLUMN_RFID),
+                        good.get(COLUMNS.COLUMN_GTIN)
+                },
                 null,
                 null,
                 null
@@ -233,11 +299,13 @@ public final class DB_Helper {
                 new String[]{COLUMNS.COLUMN_QTYOUT, COLUMNS.COLUMN_QTYIN},
                 COLUMNS.COLUMN_GUID + " = ? and " +
                         COLUMNS.COLUMN_SN + " = ? and " +
+                        COLUMNS.COLUMN_STATE + " = ? and " +
                         COLUMNS.COLUMN_RFID + " = ? and " +
                         COLUMNS.COLUMN_GTIN + " = ?",
                 new String[]{
                         good.get(COLUMNS.COLUMN_GUID),
                         good.get(COLUMNS.COLUMN_SN),
+                        good.get(COLUMNS.COLUMN_STATE),
                         good.get(COLUMNS.COLUMN_RFID),
                         good.get(COLUMNS.COLUMN_GTIN)
                 },
@@ -353,18 +421,23 @@ public final class DB_Helper {
             case LEFTOVERS.TABLE_NAME:{
                 content = new ContentValues();
 
-                content.put(Tables.COLUMNS.COLUMN_GUID, (String) jObject.get(Tables.COLUMNS.COLUMN_GUID));
-                content.put(Tables.COLUMNS.COLUMN_GTIN,
+                content.put(COLUMNS.COLUMN_GUID, (String) jObject.get(COLUMNS.COLUMN_GUID));
+                content.put(COLUMNS.COLUMN_GTIN,
                         jObject.get(Tables.COLUMNS.COLUMN_GTIN) == null ?
-                                "" : (String) jObject.get(Tables.COLUMNS.COLUMN_GUID)
+                                "" : (String) jObject.get(COLUMNS.COLUMN_GTIN)
                 );
                 content.put(Tables.COLUMNS.COLUMN_SN,
-                        jObject.get(Tables.COLUMNS.COLUMN_SN) == null ?
-                                "" : (String) jObject.get(Tables.COLUMNS.COLUMN_SN));
-                content.put(Tables.COLUMNS.COLUMN_RFID,
-                        jObject.get(Tables.COLUMNS.COLUMN_RFID) == null ?
-                                "" : (String) jObject.get(Tables.COLUMNS.COLUMN_RFID));
-                content.put(Tables.COLUMNS.COLUMN_QTYIN, Long.toString((Long) jObject.get(Tables.COLUMNS.COLUMN_QTYIN)));
+                        jObject.get(COLUMNS.COLUMN_SN) == null ?
+                                "" : (String) jObject.get(COLUMNS.COLUMN_SN));
+
+                content.put(COLUMNS.COLUMN_STATE,
+                        jObject.get(COLUMNS.COLUMN_STATE) == null ?
+                                "" : (String) jObject.get(COLUMNS.COLUMN_STATE));
+
+                content.put(COLUMNS.COLUMN_RFID,
+                        jObject.get(COLUMNS.COLUMN_RFID) == null ?
+                                "" : (String) jObject.get(COLUMNS.COLUMN_RFID));
+                content.put(COLUMNS.COLUMN_QTYIN, Long.toString((Long) jObject.get(COLUMNS.COLUMN_QTYIN)));
 
                 int idRow = (int) db.insert(Tables.LEFTOVERS.TABLE_NAME,
                         null,
@@ -384,6 +457,9 @@ public final class DB_Helper {
                 content.put(Tables.COLUMNS.COLUMN_SN,
                         jObject.get(Tables.COLUMNS.COLUMN_SN) == null ?
                                 "" : (String) jObject.get(Tables.COLUMNS.COLUMN_SN));
+                content.put(COLUMNS.COLUMN_STATE,
+                        jObject.get(COLUMNS.COLUMN_STATE) == null ?
+                                "" : (String) jObject.get(COLUMNS.COLUMN_STATE));
                 content.put(Tables.COLUMNS.COLUMN_RFID,
                         jObject.get(Tables.COLUMNS.COLUMN_RFID) == null ?
                                 "" : (String) jObject.get(Tables.COLUMNS.COLUMN_RFID)
@@ -395,12 +471,13 @@ public final class DB_Helper {
 
                 break;
             }
+
             case STATES.TABLE_NAME:{
                 content = new ContentValues();
 
-                content.put(Tables.COLUMNS.COLUMN_GUID, (String) jObject.get(Tables.COLUMNS.COLUMN_GUID));
-                content.put(COLUMNS.COLUMN_STATE, jObject.get(COLUMNS.COLUMN_STATE) == null ?
-                                "" : (String) jObject.get(COLUMNS.COLUMN_STATE)
+                content.put(COLUMNS.COLUMN_STATE, (String) jObject.get(COLUMNS.COLUMN_STATE));
+                content.put(COLUMNS.COLUMN_STATE_NAME, jObject.get(COLUMNS.COLUMN_STATE_NAME) == null ?
+                                "" : (String) jObject.get(COLUMNS.COLUMN_STATE_NAME)
                 );
                 int idRow = (int) db.insert(Tables.STATES.TABLE_NAME,
                         null,

@@ -1,7 +1,14 @@
 package com.finnflare.terminal.alien.scanner.driver;
 
+import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -62,6 +69,8 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
                         txtview.setText(good.get("_COLOR"));
                         txtview = findViewById(R.id.goodSize);
                         txtview.setText(good.get("_SIZE"));
+                        txtview = findViewById(R.id.goodStateTextView);
+                        txtview.setText(good.get("_STATE_NAME"));
 
                         int incr = db_helper.increaseGoodLeftoversCount(good);
                         switch(incr){
@@ -89,10 +98,23 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
                             }
                         }
 
-                        HashMap<String, Long> goodCount = db_helper.getGoodLeftoverCount(
-                                good.get("_GUID"),
-                                good.get("_SN")
-                        );
+                        Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            v.vibrate(VibrationEffect.createOneShot(5000, VibrationEffect.DEFAULT_AMPLITUDE));
+                        } else {
+                            v.vibrate(500);
+                        }
+
+                        try {
+                            Uri notify = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notify);
+                            r.play();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        HashMap<String, Long> goodCount = db_helper.getGoodLeftoverCount(good);
+
                         txtview = findViewById(R.id.goodScanTextView);
 
                         txtview.setText(String.valueOf(goodCount.get("_QTYOUT")));
@@ -150,6 +172,8 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
         txtview.setText(R.string.goodColorText);
         txtview = findViewById(R.id.goodSize);
         txtview.setText(R.string.goodSizeText);
+        txtview = findViewById(R.id.goodStateTextView);
+        txtview.setText(R.string.gootStateText);
 
         txtview = findViewById(R.id.goodScanTextView);
         txtview.setTextColor(getResources().getColor(R.color.qtyoutTextColor));
@@ -158,15 +182,12 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
         txtview = findViewById(R.id.goodQTYINTextView);
         txtview.setText(String.valueOf(0));
 
-        HashMap<String, Long> goodCount = db_helper.getGoodLeftoverCount(
-                good.get("_GUID"),
-                good.get("_SN")
-        );
+        HashMap<String, Long> goodCount = db_helper.getGoodLeftoverCount(good);
 
-        if(goodCount.get("_QTYOUT") > goodCount.get("_QTYIN") + 1){
+        if(goodCount.get("_QTYOUT") > goodCount.get("_QTYIN")){
             txtview = findViewById(R.id.wrongScanNum);
             txtview.setText(String.valueOf(
-                   Long.parseLong(txtview.getText().toString()) - 1)
+                    Long.parseLong(txtview.getText().toString()) - 1)
             );
         }
         else {
@@ -176,6 +197,10 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
             );
         }
         isAbleToDecrease = false;
+
+        Button revBut = findViewById(R.id.revertBut);
+        revBut.setEnabled(isAbleToDecrease);
+
         db_helper.decreaseGoodLeftoverCount(good);
     }
 

@@ -7,7 +7,7 @@ import com.alien.rfid.RFIDCallback;
 import com.alien.rfid.RFIDReader;
 import com.alien.rfid.ReaderException;
 
-public class Alien_RFID_Scanner_Utils {
+class Alien_RFID_Scanner_Utils {
     private static final String TAG = "FF_TERMINAL_LOG";
     private static RFIDReader reader;
     private RFIDCallback listener;

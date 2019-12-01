@@ -18,7 +18,8 @@ final class DB_Open_Helper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(GOODS.CREATE_TABLE);
-        db.execSQL(LEFTOVERS.CREATE_TABLE);
+        db.execSQL(BARCODE_LEFTOVERS.CREATE_TABLE);
+        db.execSQL(RFID_LEFTOVERS.CREATE_TABLE);
         db.execSQL(MARKING_CODES.CREATE_TABLE);
         db.execSQL(STATES.CREATE_TABLE);
     }

@@ -23,11 +23,11 @@ import com.alien.common.KeyCode.ALR_H450;
 
 import java.util.HashMap;
 
-import com.finnflare.terminal.db_helper.DB_Helper;
+import com.finnflare.terminal.db_helper.DB_Barcode_Helper;
 
 public class Alien_Barcode_Scanner extends AppCompatActivity {
     private BarcodeReader barcodeReader;
-    private DB_Helper db_helper;
+    private DB_Barcode_Helper db_helper;
     private HashMap<String, String> good;
     boolean isAbleToDecrease = false;
 
@@ -37,7 +37,7 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
         setContentView(R.layout.activity_alien_barcode_scanner);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        db_helper = new DB_Helper(this);
+        db_helper = new DB_Barcode_Helper(this);
         barcodeReader = new BarcodeReader(this);
 
         HashMap<String, Long> Counts = db_helper.getLeftoversCount();

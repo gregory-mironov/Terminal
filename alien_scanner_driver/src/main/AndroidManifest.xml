@@ -5,7 +5,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application>
-        <activity android:name=".Alien_Barcode_Scanner"></activity>
+        <activity android:name=".Alien_RFID_Search"></activity>
+        <activity android:name=".Alien_Barcode_Scanner" />
         <activity android:name=".Alien_RFID_Scanner" />
     </application>
 

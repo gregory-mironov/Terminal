@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -21,11 +22,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.alien.common.KeyCode;
 import com.alien.rfid.RFIDCallback;
 import com.alien.rfid.Tag;
-import com.finnflare.terminal.db_helper.DB_Helper;
+import com.finnflare.terminal.db_helper.DB_RFID_Helper;
 
 import java.util.HashMap;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallback {
 
@@ -54,7 +53,7 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
     private long LastScanTime = 0;
 
     private Alien_RFID_Scanner_Utils scanner;
-    private DB_Helper db_helper;
+    private DB_RFID_Helper db_helper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +62,7 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        db_helper = new DB_Helper(this);
+        db_helper = new DB_RFID_Helper(this);
 
         HashMap<String, Long> Counts = db_helper.getLeftoversCount();
 
@@ -95,15 +94,15 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
     }
 
     public void onTagRead(Tag tag) {
+        double rssi = tag.getRSSI();
+        Log.v(TAG, "RSSI - " + rssi);
         HashMap<String, String> scanData = db_helper.decodeScanResult(tag.getEPC());
         if(scanData != null){
 
             HashMap<String, String> good = db_helper.getGoodInfo(scanData);
-
             Bundle bundle = new Bundle();
 
             int incr = db_helper.increaseGoodLeftoversCount(good);
-
             switch(incr){
                 case 1:{
                     bundle.putString("increment", "correct");

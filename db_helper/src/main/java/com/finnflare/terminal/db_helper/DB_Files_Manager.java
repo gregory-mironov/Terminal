@@ -176,16 +176,16 @@ public class DB_Files_Manager extends AppCompatActivity {
             //-----  LEFTOVERS loading
             try {
                 Log.v(TAG, "Start LEFTOVERS JSON loading");
-                reader = new FileReader(root + File.separator + Tables.LEFTOVERS.LOAD_FILE_NAME);
+                reader = new FileReader(root + File.separator + Tables.BARCODE_LEFTOVERS.LOAD_FILE_NAME);
 
                 JSONParser parser = new JSONParser();
                 jObject = (JSONObject) parser.parse(reader);
 
-                jArray = (JSONArray) jObject.get(Tables.LEFTOVERS.TABLE_NAME);
+                jArray = (JSONArray) jObject.get(Tables.BARCODE_LEFTOVERS.FILE_OBJECT_NAME);
 
                 if(jArray != null) {
                     bundle = new Bundle();
-                    bundle.putString("title", Tables.LEFTOVERS.LOAD_FILE_PROCESS_TITLE);
+                    bundle.putString("title", Tables.BARCODE_LEFTOVERS.LOAD_FILE_PROCESS_TITLE);
                     bundle.putInt("progress", jArray.size());
                     if (!progressBarIsShown) {
                         bundle.putBoolean("start", true);
@@ -202,7 +202,8 @@ public class DB_Files_Manager extends AppCompatActivity {
                     for (Object o : jArray) {
                         leftovers_count++;
 
-                        db_helper.putJSONObjectToTable((JSONObject) o, Tables.LEFTOVERS.TABLE_NAME);
+                        db_helper.putJSONObjectToTable((JSONObject) o, Tables.BARCODE_LEFTOVERS.TABLE_NAME);
+                        db_helper.putJSONObjectToTable((JSONObject) o, Tables.RFID_LEFTOVERS.TABLE_NAME);
 
                         if( leftovers_count == leftoversIter){
                             bundle = new Bundle();
@@ -216,7 +217,7 @@ public class DB_Files_Manager extends AppCompatActivity {
                 }
                 reader.close();
                 isFileLoaded = true;
-                new File(root + File.separator + Tables.LEFTOVERS.LOAD_FILE_NAME).delete();
+                new File(root + File.separator + Tables.BARCODE_LEFTOVERS.LOAD_FILE_NAME).delete();
             } catch (FileNotFoundException e) {
                 Log.v(TAG, "Error LEFTOVERS file not found : " + e.toString());
             } catch (IOException e) {
@@ -306,7 +307,6 @@ public class DB_Files_Manager extends AppCompatActivity {
                         leftovers_count++;
 
                         db_helper.putJSONObjectToTable((JSONObject) o, Tables.STATES.TABLE_NAME);
-
                         if( leftovers_count == leftoversIter){
                             bundle = new Bundle();
                             bundle.putInt("progress", leftoversIter);
@@ -352,79 +352,124 @@ public class DB_Files_Manager extends AppCompatActivity {
 
         @Override
         public void run() {
-            Cursor cursor = db_helper.getLeftoversForUpload();
+            Cursor cursor = db_helper.getBCLeftoversForUpload();
             Bundle bundle;
             Message msg;
             boolean isUploaded = false;
-
+            String root = Environment.
+                    getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).
+                    getAbsolutePath();
             if (cursor.moveToFirst()) {
-                Log.v(TAG, "Start LEFTOVERS JSON uploading");
-
-                bundle = new Bundle();
-                bundle.putString("title", Tables.LEFTOVERS.UPLOAD_FILE_PROCESS_TITLE);
-                bundle.putInt("progress", cursor.getCount());
-                bundle.putBoolean("start", true);
-                msg = new Message();
-                msg.setData(bundle);
-                dbFileUtilsHandler.sendMessage(msg);
-
-                String root = Environment.
-                        getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).
-                        getAbsolutePath();
-
-                ArrayList<JSONObject> jArrayList = new ArrayList<>();
-                HashMap<String, String> jObjectMap = new HashMap<>();
-
-                int leftovers_count = 0, leftoversIter = (int) Math.ceil(cursor.getCount() / 100);
-
-                while (!cursor.isAfterLast()) {
-                    leftovers_count++;
-
-                    jObjectMap.put(Tables.COLUMNS.COLUMN_GUID,
-                            cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_GUID)));
-                    jObjectMap.put(Tables.COLUMNS.COLUMN_GTIN,
-                            cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_GTIN)));
-                    jObjectMap.put(Tables.COLUMNS.COLUMN_SN,
-                            cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_SN)));
-                    jObjectMap.put(Tables.COLUMNS.COLUMN_STATE,
-                            cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_STATE)));
-                    jObjectMap.put(Tables.COLUMNS.COLUMN_RFID,
-                            cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_RFID)));
-                    jObjectMap.put(Tables.COLUMNS.COLUMN_QTYIN,
-                            cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_QTYIN)));
-                    jObjectMap.put(Tables.COLUMNS.COLUMN_QTYOUT,
-                            cursor.getString(cursor.getColumnIndex(Tables.COLUMNS.COLUMN_QTYOUT)));
-                    jArrayList.add(new JSONObject(jObjectMap));
-
-                    cursor.moveToNext();
-
-                    if (leftovers_count == leftoversIter) {
-                        bundle = new Bundle();
-                        bundle.putInt("progress", leftoversIter);
-                        msg = new Message();
-                        msg.setData(bundle);
-                        dbFileUtilsHandler.sendMessage(msg);
-                        leftovers_count = 0;
-                    }
-                }
                 try {
-                    FileWriter writer = new FileWriter(root + File.separator + Tables.LEFTOVERS.SAVE_FILE_NAME);
-                    HashMap<String, ArrayList> jFile = new HashMap<>();
-                    jFile.put(Tables.LEFTOVERS.TABLE_NAME, jArrayList);
-                    writer.write(new JSONObject(jFile).toJSONString());
+                    FileWriter writer = new FileWriter(root + File.separator + Tables.BARCODE_LEFTOVERS.SAVE_FILE_NAME);
+                    writer.write("{\"LEFTOVERS\":[");
+                    writer.flush();
+
+                    Log.v(TAG, "Start LEFTOVERS JSON uploading");
+
+                    bundle = new Bundle();
+                    bundle.putString("title", Tables.BARCODE_LEFTOVERS.UPLOAD_FILE_PROCESS_TITLE);
+                    bundle.putInt("progress", cursor.getCount());
+                    bundle.putBoolean("start", true);
+                    msg = new Message();
+                    msg.setData(bundle);
+                    dbFileUtilsHandler.sendMessage(msg);
+
+                    HashMap<String, String> jObjectMap = new HashMap<>();
+
+                    int leftovers_count = 0, leftoversIter = (int) Math.ceil(cursor.getCount() / 100);
+
+                    while (!cursor.isAfterLast()) {
+                        leftovers_count++;
+                        for (String column : cursor.getColumnNames()) {
+                            jObjectMap.put(column,
+                                    cursor.getString(cursor.getColumnIndex(column)));
+                        }
+
+                        writer.write(new JSONObject(jObjectMap).toJSONString());
+                        writer.flush();
+
+                        cursor.moveToNext();
+
+                        if (leftovers_count == leftoversIter) {
+                            bundle = new Bundle();
+                            bundle.putInt("progress", leftoversIter);
+                            msg = new Message();
+                            msg.setData(bundle);
+                            dbFileUtilsHandler.sendMessage(msg);
+                            leftovers_count = 0;
+                        }
+                    }
+
+                    bundle = new Bundle();
+                    bundle.putBoolean("stop", true);
+                    msg = new Message();
+                    msg.setData(bundle);
+                    dbFileUtilsHandler.sendMessage(msg);
+
+                    writer.write("]}");
+                    writer.flush();
+
+                } catch (IOException e) {
+                    Log.v(TAG, "Error BCLEFTOVERS file writing : " + e.getMessage());
+                }
+            }
+
+            cursor = db_helper.getRFLeftoversForUpload();
+            if(cursor.moveToFirst()) {
+                try {
+                    bundle = new Bundle();
+                    bundle.putString("title", Tables.RFID_LEFTOVERS.UPLOAD_FILE_PROCESS_TITLE);
+                    bundle.putInt("progress", cursor.getCount());
+                    bundle.putBoolean("start", true);
+                    msg = new Message();
+                    msg.setData(bundle);
+                    dbFileUtilsHandler.sendMessage(msg);
+
+                    FileWriter writer = new FileWriter(root + File.separator + Tables.RFID_LEFTOVERS.SAVE_FILE_NAME);
+                    writer.write("{\"LEFTOVERS\":[");
+                    writer.flush();
+
+
+                    HashMap<String, String> jObjectMap = new HashMap<>();
+
+                    int leftovers_count = 0, leftoversIter = (int) Math.ceil(cursor.getCount() / 100);
+                    while (!cursor.isAfterLast()) {
+                        leftovers_count++;
+                        for (String column : cursor.getColumnNames()) {
+                            jObjectMap.put(column,
+                                    cursor.getString(cursor.getColumnIndex(column)));
+                        }
+                        writer.write(new JSONObject(jObjectMap).toJSONString());
+                        writer.flush();
+
+                        cursor.moveToNext();
+
+                        if (leftovers_count == leftoversIter) {
+                            bundle = new Bundle();
+                            bundle.putInt("progress", leftoversIter);
+                            msg = new Message();
+                            msg.setData(bundle);
+                            dbFileUtilsHandler.sendMessage(msg);
+                            leftovers_count = 0;
+                        }
+                    }
+
+                    bundle = new Bundle();
+                    bundle.putBoolean("stop", true);
+                    msg = new Message();
+                    msg.setData(bundle);
+                    dbFileUtilsHandler.sendMessage(msg);
+
+                    writer.write("]}");
                     writer.flush();
 
                     isUploaded = true;
                 } catch (IOException e) {
-                    Log.v(TAG, "Error LEFTOVERS file writing : " + e.getMessage());
+                    Log.v(TAG, "Error RFIDLEFTOVERS file writing : " + e.getMessage());
                 }
-
-                bundle = new Bundle();
-                bundle.putBoolean("stop", true);
-                msg = new Message();
-                msg.setData(bundle);
-                dbFileUtilsHandler.sendMessage(msg);
             }
+
             cursor.close();
 
             bundle = new Bundle();

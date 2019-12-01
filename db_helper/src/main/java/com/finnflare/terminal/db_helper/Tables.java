@@ -47,15 +47,42 @@ final class Tables {
         static final String LOAD_FILE_PROCESS_TITLE = "Загрузка информации о товарах";
     }
 
-    static abstract class LEFTOVERS implements BaseColumns{
-        static final String TABLE_NAME = "LEFTOVERS";
-        static final  String TABLE_PK = "PK_LEFTOVERS";
+    static abstract class BARCODE_LEFTOVERS implements BaseColumns{
+        static final String TABLE_NAME = "BARCODE_LEFTOVERS";
+        static final String FILE_OBJECT_NAME = "LEFTOVERS";
+        static final String TABLE_PK = "PK_LEFTOVERS";
 
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS " +
                 TABLE_NAME + " ( " +
                 COLUMNS.COLUMN_GUID +  " VARCHAR (36) NOT NULL, " +
                 COLUMNS.COLUMN_GTIN +  " VARCHAR (50), " +
                 COLUMNS.COLUMN_SN + " VARCHAR (20), " +
+                COLUMNS.COLUMN_STATE + " VARCHAR (36), " +
+                COLUMNS.COLUMN_QTYIN + " INTEGER DEFAULT (0), " +
+                COLUMNS.COLUMN_QTYOUT +  " INTEGER DEFAULT (0), " +
+                COLUMNS.COLUMN_TIME + " DATETIME, " +
+                "CONSTRAINT " + TABLE_PK + " PRIMARY KEY ( " +
+                COLUMNS.COLUMN_GUID + ", " +
+                COLUMNS.COLUMN_GTIN + ", " +
+                COLUMNS.COLUMN_SN +
+                " ) " +
+                "ON CONFLICT ROLLBACK );";
+        static final String TRUNCATE_TABLE = "DELETE FROM " + TABLE_NAME + ";";
+
+        static final String LOAD_FILE_NAME = "ff.inv.leftovers.json";
+        static final String SAVE_FILE_NAME = "ff.inv.bc.result.json";
+        static final String LOAD_FILE_PROCESS_TITLE = "Загрузка остатков товаров";
+        static final String UPLOAD_FILE_PROCESS_TITLE = "Выгрузка остатков товаров";
+    }
+
+    static abstract class RFID_LEFTOVERS implements BaseColumns{
+        static final String TABLE_NAME = "RFID_LEFTOVERS";
+        static final  String TABLE_PK = "PK_LEFTOVERS";
+
+        static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS " +
+                TABLE_NAME + " ( " +
+                COLUMNS.COLUMN_GUID +  " VARCHAR (36) NOT NULL, " +
+                COLUMNS.COLUMN_GTIN +  " VARCHAR (50), " +
                 COLUMNS.COLUMN_STATE + " VARCHAR (36), " +
                 COLUMNS.COLUMN_RFID + " VARCHAR (40), " +
                 COLUMNS.COLUMN_QTYIN + " INTEGER DEFAULT (0), " +
@@ -64,16 +91,15 @@ final class Tables {
                 "CONSTRAINT " + TABLE_PK + " PRIMARY KEY ( " +
                 COLUMNS.COLUMN_GUID + ", " +
                 COLUMNS.COLUMN_GTIN + ", " +
-                COLUMNS.COLUMN_SN + ", " +
                 COLUMNS.COLUMN_RFID +
                 " ) " +
                 "ON CONFLICT ROLLBACK );";
         static final String TRUNCATE_TABLE = "DELETE FROM " + TABLE_NAME + ";";
 
         static final String LOAD_FILE_NAME = "ff.inv.leftovers.json";
-        static final String SAVE_FILE_NAME = "ff.inv.result.json";
-        static final String LOAD_FILE_PROCESS_TITLE = "Загрузка остатков товаров";
-        static final String UPLOAD_FILE_PROCESS_TITLE = "Выгрузка остатков товаров";
+        static final String SAVE_FILE_NAME = "ff.inv.rfid.result.json";
+        static final String LOAD_FILE_PROCESS_TITLE = "Загрузка RFID-остатков товаров";
+        static final String UPLOAD_FILE_PROCESS_TITLE = "Выгрузка RFID-остатков товаров";
     }
 
     static abstract class MARKING_CODES implements BaseColumns{

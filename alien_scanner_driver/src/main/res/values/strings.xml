@@ -7,4 +7,7 @@
     <string name="goodColorText">Цвет</string>
     <string name="goodSizeText">Размер</string>
     <string name="gootStateText">Состояние</string>
+
+    <string name="scanButElStartText">Начать сканирование</string>
+    <string name="scanButElStopText">Остановить сканирование</string>
 </resources>

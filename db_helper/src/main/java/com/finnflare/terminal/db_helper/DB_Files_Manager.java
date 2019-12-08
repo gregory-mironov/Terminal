@@ -27,7 +27,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class DB_Files_Manager extends AppCompatActivity {
@@ -173,59 +172,6 @@ public class DB_Files_Manager extends AppCompatActivity {
                 Log.v(TAG, "Error parsing GOODS JSON : " + e.toString());
             }
 
-            //-----  LEFTOVERS loading
-            try {
-                Log.v(TAG, "Start LEFTOVERS JSON loading");
-                reader = new FileReader(root + File.separator + Tables.BARCODE_LEFTOVERS.LOAD_FILE_NAME);
-
-                JSONParser parser = new JSONParser();
-                jObject = (JSONObject) parser.parse(reader);
-
-                jArray = (JSONArray) jObject.get(Tables.BARCODE_LEFTOVERS.FILE_OBJECT_NAME);
-
-                if(jArray != null) {
-                    bundle = new Bundle();
-                    bundle.putString("title", Tables.BARCODE_LEFTOVERS.LOAD_FILE_PROCESS_TITLE);
-                    bundle.putInt("progress", jArray.size());
-                    if (!progressBarIsShown) {
-                        bundle.putBoolean("start", true);
-                        progressBarIsShown = true;
-                    }
-                    msg = new Message();
-                    msg.setData(bundle);
-                    dbFileUtilsHandler.sendMessage(msg);
-
-                    db_helper.truncateLEFTOVERS();
-
-                    int leftovers_count = 0, leftoversIter = (int) Math.ceil(jArray.size() / 100);
-
-                    for (Object o : jArray) {
-                        leftovers_count++;
-
-                        db_helper.putJSONObjectToTable((JSONObject) o, Tables.BARCODE_LEFTOVERS.TABLE_NAME);
-                        db_helper.putJSONObjectToTable((JSONObject) o, Tables.RFID_LEFTOVERS.TABLE_NAME);
-
-                        if( leftovers_count == leftoversIter){
-                            bundle = new Bundle();
-                            bundle.putInt("progress", leftoversIter);
-                            msg = new Message();
-                            msg.setData(bundle);
-                            dbFileUtilsHandler.sendMessage(msg);
-                            leftovers_count = 0;
-                        }
-                    }
-                }
-                reader.close();
-                isFileLoaded = true;
-                new File(root + File.separator + Tables.BARCODE_LEFTOVERS.LOAD_FILE_NAME).delete();
-            } catch (FileNotFoundException e) {
-                Log.v(TAG, "Error LEFTOVERS file not found : " + e.toString());
-            } catch (IOException e) {
-                Log.v(TAG, "Error LEFTOVERS file reading : " + e.toString());
-            } catch (ParseException e) {
-                Log.v(TAG, "Error parsing LEFTOVERS JSON : " + e.toString());
-            }
-
             //----- MARKING_CODES loading
             try {
                 Log.v(TAG, "Start MARKING_CODES JSON loading");
@@ -328,6 +274,66 @@ public class DB_Files_Manager extends AppCompatActivity {
                 Log.v(TAG, "Error parsing LEFTOVERS JSON : " + e.toString());
             }
 
+            //-----  LEFTOVERS loading
+            try {
+                Log.v(TAG, "Start LEFTOVERS JSON loading");
+
+                File[] files = new File(root).listFiles(DB_Helper.LOFileNameFilter);
+
+                if(files != null) {
+                    for (File file : files) {
+                        reader = new FileReader(file.getAbsolutePath());
+
+                        JSONParser parser = new JSONParser();
+                        jObject = (JSONObject) parser.parse(reader);
+
+                        jArray = (JSONArray) jObject.get(Tables.BARCODE_LEFTOVERS.FILE_OBJECT_NAME);
+
+                        if (jArray != null) {
+                            bundle = new Bundle();
+                            bundle.putString("title",
+                                    Tables.BARCODE_LEFTOVERS.LOAD_FILE_PROCESS_TITLE + "\n" + file.getName()
+                            );
+                            bundle.putInt("progress", jArray.size());
+                            if (!progressBarIsShown) {
+                                bundle.putBoolean("start", true);
+                                progressBarIsShown = true;
+                            }
+                            msg = new Message();
+                            msg.setData(bundle);
+                            dbFileUtilsHandler.sendMessage(msg);
+
+                            int leftovers_count = 0, leftoversIter = (int) Math.ceil(jArray.size() / 100);
+
+                            for (Object o : jArray) {
+                                leftovers_count++;
+
+                                db_helper.putJSONObjectToTable((JSONObject) o, Tables.BARCODE_LEFTOVERS.TABLE_NAME);
+                                db_helper.putJSONObjectToTable((JSONObject) o, Tables.RFID_LEFTOVERS.TABLE_NAME);
+
+                                if (leftovers_count == leftoversIter) {
+                                    bundle = new Bundle();
+                                    bundle.putInt("progress", leftoversIter);
+                                    msg = new Message();
+                                    msg.setData(bundle);
+                                    dbFileUtilsHandler.sendMessage(msg);
+                                    leftovers_count = 0;
+                                }
+                            }
+                        }
+                        reader.close();
+                        isFileLoaded = true;
+                        file.delete();
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                Log.v(TAG, "Error LEFTOVERS file not found : " + e.toString());
+            } catch (IOException e) {
+                Log.v(TAG, "Error LEFTOVERS file reading : " + e.toString());
+            } catch (ParseException e) {
+                Log.v(TAG, "Error parsing LEFTOVERS JSON : " + e.toString());
+            }
+
             bundle = new Bundle();
             bundle.putBoolean("stop", true);
             msg = new Message();
@@ -410,6 +416,7 @@ public class DB_Files_Manager extends AppCompatActivity {
                     writer.write("]}");
                     writer.flush();
 
+                    isUploaded = true;
                 } catch (IOException e) {
                     Log.v(TAG, "Error BCLEFTOVERS file writing : " + e.getMessage());
                 }

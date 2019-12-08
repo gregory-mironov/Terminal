@@ -6,23 +6,42 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.finnflare.terminal.db_helper.Tables.BARCODE_LEFTOVERS;
+import com.finnflare.terminal.db_helper.Tables.COLUMNS;
+import com.finnflare.terminal.db_helper.Tables.DATABASE;
+import com.finnflare.terminal.db_helper.Tables.GOODS;
+import com.finnflare.terminal.db_helper.Tables.MARKING_CODES;
+import com.finnflare.terminal.db_helper.Tables.RFID_LEFTOVERS;
+import com.finnflare.terminal.db_helper.Tables.STATES;
+
 import org.json.simple.JSONObject;
 
-import java.util.HashMap;
+import java.io.File;
+import java.io.FilenameFilter;
 
-import com.finnflare.terminal.db_helper.Tables.*;
-
-public final class DB_Helper {
+final class DB_Helper {
     private String TAG = "FF_TERMINAL_LOG";
-    private Context context;
-
     private SQLiteDatabase db;
-    private DB_Scan_Decoder decoder;
+
+    public static class LeftoversFileNameFilter implements FilenameFilter {
+
+        private String start, end;
+
+        LeftoversFileNameFilter(){
+            this.start = BARCODE_LEFTOVERS.LOAD_FILE_NAME_START;
+            this.end = BARCODE_LEFTOVERS.LOAD_FILE_NAME_END;
+        }
+
+        @Override
+        public boolean accept(File dir, String name) {
+            return (name.toLowerCase().startsWith(start) && name.toLowerCase().endsWith(end));
+        }
+    }
+
+    static LeftoversFileNameFilter LOFileNameFilter = new LeftoversFileNameFilter();
 
     DB_Helper(Context context){
-        this.context = context;
         db = new DB_Open_Helper(context, DATABASE.DATABASE_NAME, DATABASE.DATABASE_VERSION).getWritableDatabase();
-        decoder = new DB_Scan_Decoder();
         Log.v(TAG, "DataBase opened/created");
     }
 
@@ -76,11 +95,62 @@ public final class DB_Helper {
                                 "" : (String) jObject.get(COLUMNS.COLUMN_STATE));
                 content.put(COLUMNS.COLUMN_QTYIN, Long.toString((Long) jObject.get(COLUMNS.COLUMN_QTYIN)));
 
-                int idRow = (int) db.insert(Tables.BARCODE_LEFTOVERS.TABLE_NAME,
-                        null,
-                        content
+                Cursor cursor = db.rawQuery(
+                        "SELECT EXISTS(" +
+                        " SELECT * FROM " + BARCODE_LEFTOVERS.TABLE_NAME +
+                        " WHERE " +
+                        COLUMNS.COLUMN_GUID + " = '" + content.getAsString(COLUMNS.COLUMN_GUID) + "' AND " +
+                        COLUMNS.COLUMN_STATE + " = '" + content.getAsString(COLUMNS.COLUMN_STATE) + "' AND " +
+                        COLUMNS.COLUMN_GTIN + " = '" + content.getAsString(COLUMNS.COLUMN_GTIN) + "' AND " +
+                        COLUMNS.COLUMN_SN + " = '" + content.getAsString(COLUMNS.COLUMN_SN) + "' AND " +
+                        COLUMNS.COLUMN_QTYIN + " > 0 )",
+                        null
                 );
 
+                cursor.moveToFirst();
+
+                if(cursor.getInt(0) == 0) {
+
+                    int idRow = (int) db.insert(BARCODE_LEFTOVERS.TABLE_NAME,
+                            null,
+                            content
+                    );
+                }
+                else{
+                    cursor = db.rawQuery(
+                            " SELECT " + COLUMNS.COLUMN_QTYIN + " FROM " + BARCODE_LEFTOVERS.TABLE_NAME +
+                                 " WHERE " +
+                                 COLUMNS.COLUMN_GUID + " = '" + content.getAsString(COLUMNS.COLUMN_GUID) + "' AND " +
+                                 COLUMNS.COLUMN_STATE + " = '" + content.getAsString(COLUMNS.COLUMN_STATE) + "' AND " +
+                                 COLUMNS.COLUMN_GTIN + " = '" + content.getAsString(COLUMNS.COLUMN_GTIN) + "' AND " +
+                                 COLUMNS.COLUMN_SN + " = '" + content.getAsString(COLUMNS.COLUMN_SN) + "' AND " +
+                                 COLUMNS.COLUMN_QTYIN + " > 0",
+                            null
+                    );
+                    cursor.moveToFirst();
+
+                    ContentValues content_upd = new ContentValues();
+                    content_upd.put(COLUMNS.COLUMN_QTYIN, Long.toString(
+                            (Long) jObject.get(COLUMNS.COLUMN_QTYIN) + cursor.getLong(0)
+                    ));
+
+                    int idRow = (int) db.update(BARCODE_LEFTOVERS.TABLE_NAME,
+                            content_upd,
+                            COLUMNS.COLUMN_GUID + " = ? AND " +
+                                    COLUMNS.COLUMN_STATE + " = ? AND " +
+                                    COLUMNS.COLUMN_GTIN + " = ? AND " +
+                                    COLUMNS.COLUMN_SN + " = ? AND " +
+                                    COLUMNS.COLUMN_QTYIN + " > 0",
+                            new String[]{
+                                    content.getAsString(COLUMNS.COLUMN_GUID),
+                                    content.getAsString(COLUMNS.COLUMN_STATE),
+                                    content.getAsString(COLUMNS.COLUMN_GTIN),
+                                    content.getAsString(COLUMNS.COLUMN_SN)
+                            }
+                    );
+                }
+
+                cursor.close();
                 break;
             }
 
@@ -99,11 +169,59 @@ public final class DB_Helper {
                                 "" : (String) jObject.get(COLUMNS.COLUMN_RFID));
                 content.put(COLUMNS.COLUMN_QTYIN, Long.toString((Long) jObject.get(COLUMNS.COLUMN_QTYIN)));
 
-                int idRow = (int) db.insert(Tables.RFID_LEFTOVERS.TABLE_NAME,
-                        null,
-                        content
+                Cursor cursor = db.rawQuery(
+                        "SELECT EXISTS(" +
+                                " SELECT * FROM " + RFID_LEFTOVERS.TABLE_NAME +
+                                " WHERE " +
+                                COLUMNS.COLUMN_GUID + " = '" + content.getAsString(COLUMNS.COLUMN_GUID) + "' AND " +
+                                COLUMNS.COLUMN_STATE + " = '" + content.getAsString(COLUMNS.COLUMN_STATE) + "' AND " +
+                                COLUMNS.COLUMN_GTIN + " = '" + content.getAsString(COLUMNS.COLUMN_GTIN) + "' AND " +
+                                COLUMNS.COLUMN_RFID + " = '" + content.getAsString(COLUMNS.COLUMN_RFID) + "' AND " +
+                                COLUMNS.COLUMN_QTYIN + " > 0 )",
+                        null
                 );
+                cursor.moveToFirst();
 
+                if(cursor.getInt(0) == 0) {
+                    int idRow = (int) db.insert(Tables.RFID_LEFTOVERS.TABLE_NAME,
+                            null,
+                            content
+                    );
+                }
+                else{
+                    cursor = db.rawQuery(
+                            " SELECT " + COLUMNS.COLUMN_QTYIN + " FROM " + RFID_LEFTOVERS.TABLE_NAME +
+                                    " WHERE " +
+                                    COLUMNS.COLUMN_GUID + " = '" + content.getAsString(COLUMNS.COLUMN_GUID) + "' AND " +
+                                    COLUMNS.COLUMN_STATE + " = '" + content.getAsString(COLUMNS.COLUMN_STATE) + "' AND " +
+                                    COLUMNS.COLUMN_GTIN + " = '" + content.getAsString(COLUMNS.COLUMN_GTIN) + "' AND " +
+                                    COLUMNS.COLUMN_RFID + " = '" + content.getAsString(COLUMNS.COLUMN_RFID) + "' AND " +
+                                    COLUMNS.COLUMN_QTYIN + " > 0",
+                            null
+                    );
+                    cursor.moveToFirst();
+
+                    ContentValues content_upd = new ContentValues();
+                    content_upd.put(COLUMNS.COLUMN_QTYIN, Long.toString(
+                            (Long) jObject.get(COLUMNS.COLUMN_QTYIN) + cursor.getLong(0)
+                    ));
+
+                    int idRow = (int) db.update(RFID_LEFTOVERS.TABLE_NAME,
+                            content_upd,
+                            COLUMNS.COLUMN_GUID + " = ? AND " +
+                                    COLUMNS.COLUMN_STATE + " = ? AND " +
+                                    COLUMNS.COLUMN_GTIN + " = ? AND " +
+                                    COLUMNS.COLUMN_RFID + " = ? AND " +
+                                    COLUMNS.COLUMN_QTYIN + " > 0",
+                            new String[]{
+                                    content.getAsString(COLUMNS.COLUMN_GUID),
+                                    content.getAsString(COLUMNS.COLUMN_STATE),
+                                    content.getAsString(COLUMNS.COLUMN_GTIN),
+                                    content.getAsString(COLUMNS.COLUMN_RFID)
+                            }
+                    );
+                }
+                cursor.close();
                 break;
             }
 

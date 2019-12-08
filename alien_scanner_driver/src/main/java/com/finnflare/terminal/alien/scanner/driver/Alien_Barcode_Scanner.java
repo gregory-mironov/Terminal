@@ -2,6 +2,7 @@ package com.finnflare.terminal.alien.scanner.driver;
 
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.database.Cursor;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -13,17 +14,18 @@ import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.alien.barcode.BarcodeCallback;
 import com.alien.barcode.BarcodeReader;
 import com.alien.common.KeyCode.ALR_H450;
+import com.finnflare.terminal.db_helper.DB_Barcode_Helper;
 
 import java.util.HashMap;
-
-import com.finnflare.terminal.db_helper.DB_Barcode_Helper;
 
 public class Alien_Barcode_Scanner extends AppCompatActivity {
     private BarcodeReader barcodeReader;
@@ -54,6 +56,13 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
 
     private void startScan() {
         if (!barcodeReader.isRunning()) {
+            ConstraintLayout goodInfoLayout = findViewById(R.id.scanLayout);
+            if( goodInfoLayout.getVisibility() == View.GONE) {
+                LinearLayout clickScanListLayout = findViewById(R.id.clickScanListLayout);
+                clickScanListLayout.removeAllViews();
+                clickScanListLayout.setVisibility(View.GONE);
+                goodInfoLayout.setVisibility(View.VISIBLE);
+            }
             barcodeReader.start(new BarcodeCallback() {
                 public void onBarcodeRead(String scanRes) {
                     HashMap<String, String> scanData = db_helper.decodeScanResult(scanRes);
@@ -166,16 +175,8 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
     }
 
     public void onRevertScanClick(View view){
-        TextView txtview = findViewById(R.id.goodName);
-        txtview.setText(R.string.fullGoodName);
-        txtview = findViewById(R.id.goodColor);
-        txtview.setText(R.string.goodColorText);
-        txtview = findViewById(R.id.goodSize);
-        txtview.setText(R.string.goodSizeText);
-        txtview = findViewById(R.id.goodStateTextView);
-        txtview.setText(R.string.gootStateText);
-
-        txtview = findViewById(R.id.goodScanTextView);
+        cleanScanRes();
+        TextView txtview = findViewById(R.id.goodScanTextView);
         txtview.setTextColor(getResources().getColor(R.color.qtyoutTextColor));
         txtview.setText(String.valueOf(0));
 
@@ -202,6 +203,120 @@ public class Alien_Barcode_Scanner extends AppCompatActivity {
         revBut.setEnabled(isAbleToDecrease);
 
         db_helper.decreaseGoodLeftoverCount(good);
+    }
+
+    public void onWrongScansClick(View view){
+        if (this.barcodeReader.isRunning()) {
+            this.barcodeReader.stop();
+        }
+
+        ConstraintLayout goodInfoLayout = findViewById(R.id.scanLayout);
+        LinearLayout clickScanListLayout = findViewById(R.id.clickScanListLayout);
+        clickScanListLayout.removeAllViews();
+
+        if( goodInfoLayout.getVisibility() == View.GONE){
+            clickScanListLayout.setVisibility(View.GONE);
+            goodInfoLayout.setVisibility(View.VISIBLE);
+        }
+        else{
+            Cursor cursor = db_helper.getWrongScansList();
+            if (cursor.moveToFirst()){
+                goodInfoLayout.setVisibility(View.GONE);
+                clickScanListLayout.setVisibility(View.VISIBLE);
+                cleanScanRes();
+
+                while(!cursor.isAfterLast()){
+                    TextView wrongScanInfo = new TextView(this);
+                    wrongScanInfo.setText(
+                            (cursor.getString(cursor.getColumnIndex("_NAME")) != null ?
+                                cursor.getString(
+                                        cursor.getColumnIndex("_NAME")
+                                ).concat(
+                                            " : "
+                                ).concat(
+                                cursor.getString(
+                                        cursor.getColumnIndex("_STATE_NAME"))
+                                )
+                                    :
+                                "Неизвестный товар\n".concat(
+                                        cursor.getString(
+                                                cursor.getColumnIndex("_GTIN")
+                                        )
+                                )
+                            )
+                    );
+                    wrongScanInfo.setTextColor(getResources().getColor(R.color.mainTextColor));
+                    wrongScanInfo.setTextSize(20);
+                    clickScanListLayout.addView(wrongScanInfo);
+
+                    wrongScanInfo = new TextView(this);
+                    wrongScanInfo.setText(
+                            cursor.getString(cursor.getColumnIndex("_QTYOUT")).concat(
+                            " : ").concat(
+                            cursor.getString(cursor.getColumnIndex("_QTYIN"))
+                    ));
+                    wrongScanInfo.setTextColor(getResources().getColor(R.color.errorsTextColor));
+                    wrongScanInfo.setTextSize(20);
+                    clickScanListLayout.addView(wrongScanInfo);
+
+                    cursor.moveToNext();
+                }
+            }
+        }
+    }
+
+    public void onRemainingScansClick(View view){
+        if (this.barcodeReader.isRunning()) {
+            this.barcodeReader.stop();
+        }
+        ConstraintLayout goodInfoLayout = findViewById(R.id.scanLayout);
+        LinearLayout clickScanListLayout = findViewById(R.id.clickScanListLayout);
+        clickScanListLayout.removeAllViews();
+
+        if( goodInfoLayout.getVisibility() == View.GONE){
+            clickScanListLayout.setVisibility(View.GONE);
+            goodInfoLayout.setVisibility(View.VISIBLE);
+        }
+        else{
+            Cursor cursor = db_helper.getRemainingScansList();
+            if (cursor.moveToFirst()){
+                goodInfoLayout.setVisibility(View.GONE);
+                clickScanListLayout.setVisibility(View.VISIBLE);
+                cleanScanRes();
+                while(!cursor.isAfterLast()){
+                    TextView wrongScanInfo = new TextView(this);
+                    wrongScanInfo.setText(
+                            cursor.getString(cursor.getColumnIndex("_NAME")).concat(" : ").concat(
+                            cursor.getString(cursor.getColumnIndex("_STATE_NAME")))
+                    );
+                    wrongScanInfo.setTextColor(getResources().getColor(R.color.mainTextColor));
+                    wrongScanInfo.setTextSize(20);
+                    clickScanListLayout.addView(wrongScanInfo);
+
+                    wrongScanInfo = new TextView(this);
+                    wrongScanInfo.setText(
+                            cursor.getString(cursor.getColumnIndex("_QTYOUT")).concat(" : ").concat(
+                            cursor.getString(cursor.getColumnIndex("_QTYIN"))
+                            ));
+                    wrongScanInfo.setTextColor(getResources().getColor(R.color.qtyoutTextColor));
+                    wrongScanInfo.setTextSize(20);
+                    clickScanListLayout.addView(wrongScanInfo);
+
+                    cursor.moveToNext();
+                }
+            }
+        }
+    }
+
+    void cleanScanRes(){
+        TextView txtview = findViewById(R.id.goodName);
+        txtview.setText(R.string.fullGoodName);
+        txtview = findViewById(R.id.goodColor);
+        txtview.setText(R.string.goodColorText);
+        txtview = findViewById(R.id.goodSize);
+        txtview.setText(R.string.goodSizeText);
+        txtview = findViewById(R.id.goodStateTextView);
+        txtview.setText(R.string.gootStateText);
     }
 
     @Override

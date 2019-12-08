@@ -1,24 +1,25 @@
 package com.finnflare.terminal.db_helper;
 
-import com.finnflare.terminal.db_helper.Tables.*;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.finnflare.terminal.db_helper.Tables.BARCODE_LEFTOVERS;
+import com.finnflare.terminal.db_helper.Tables.COLUMNS;
+import com.finnflare.terminal.db_helper.Tables.GOODS;
+import com.finnflare.terminal.db_helper.Tables.STATES;
+
 import java.util.HashMap;
 
 public final class DB_Barcode_Helper {
     private String TAG = "FF_TERMINAL_LOG";
-    private Context context;
 
     private SQLiteDatabase db;
     private DB_Scan_Decoder decoder;
 
     public DB_Barcode_Helper(Context context){
-        this.context = context;
         db = new DB_Open_Helper(context, Tables.DATABASE.DATABASE_NAME, Tables.DATABASE.DATABASE_VERSION).getWritableDatabase();
         decoder = new DB_Scan_Decoder();
         Log.v(TAG, "DataBase opened/created");
@@ -116,6 +117,7 @@ public final class DB_Barcode_Helper {
                     );
                 }
             }
+
             cursor = db.query(Tables.GOODS.TABLE_NAME,
                     null,
                     Tables.COLUMNS.COLUMN_GUID + " = ?",
@@ -124,6 +126,7 @@ public final class DB_Barcode_Helper {
                     null,
                     null
             );
+
             if(cursor.moveToFirst()) {
                 goodInfo.put(
                         Tables.COLUMNS.COLUMN_NAME,
@@ -210,10 +213,10 @@ public final class DB_Barcode_Helper {
                 long idRow = db.update(
                         BARCODE_LEFTOVERS.TABLE_NAME,
                         content,
-                        Tables.COLUMNS.COLUMN_GUID + " = ? and " +
-                                Tables.COLUMNS.COLUMN_SN + " = ? and " +
-                                Tables.COLUMNS.COLUMN_GTIN + " = ? and " +
-                                Tables.COLUMNS.COLUMN_STATE + " = ?",
+                        COLUMNS.COLUMN_GUID + " = ? and " +
+                                COLUMNS.COLUMN_SN + " = ? and " +
+                                COLUMNS.COLUMN_GTIN + " = ? and " +
+                                COLUMNS.COLUMN_STATE + " = ?",
                         new String[]{
                                 good.get(Tables.COLUMNS.COLUMN_GUID),
                                 good.get(Tables.COLUMNS.COLUMN_SN),
@@ -356,6 +359,34 @@ public final class DB_Barcode_Helper {
         cursor.close();
 
         return res;
+    }
+
+    public Cursor getWrongScansList(){
+        return db.rawQuery(
+                "SELECT g." + COLUMNS.COLUMN_NAME + ", s." + COLUMNS.COLUMN_STATE_NAME + "," +
+                " l." + COLUMNS.COLUMN_QTYIN + ", l." + COLUMNS.COLUMN_QTYOUT + "," +
+                " l." + COLUMNS.COLUMN_GTIN +
+                " FROM " + BARCODE_LEFTOVERS.TABLE_NAME + " as l" +
+                " LEFT JOIN " + STATES.TABLE_NAME + " as s" +
+                " ON s." + COLUMNS.COLUMN_STATE + " = l." + COLUMNS.COLUMN_STATE +
+                " LEFT JOIN " + GOODS.TABLE_NAME + " as g" +
+                " ON g." + COLUMNS.COLUMN_GUID + " = l." + COLUMNS.COLUMN_GUID +
+                " WHERE l." + COLUMNS.COLUMN_QTYOUT + " > l." +COLUMNS.COLUMN_QTYIN + ";",
+                null);
+    }
+
+    public Cursor getRemainingScansList(){
+        return db.rawQuery(
+                "SELECT g." + COLUMNS.COLUMN_NAME + ", s." + COLUMNS.COLUMN_STATE_NAME + ", " +
+                "l." + COLUMNS.COLUMN_QTYIN + ", l." + COLUMNS.COLUMN_QTYOUT + " " +
+                "FROM " + BARCODE_LEFTOVERS.TABLE_NAME + " as l " +
+                "LEFT JOIN " + STATES.TABLE_NAME + " as s " +
+                "ON s." + COLUMNS.COLUMN_STATE + " = l." + COLUMNS.COLUMN_STATE + " " +
+                "LEFT JOIN " + GOODS.TABLE_NAME + " as g " +
+                "ON g." + COLUMNS.COLUMN_GUID + " = l." + COLUMNS.COLUMN_GUID + " " +
+                "WHERE l." + COLUMNS.COLUMN_QTYOUT + " < l." +COLUMNS.COLUMN_QTYIN + ";",
+                null);
+
     }
 
     public void closeDB(){

@@ -1,7 +1,5 @@
 package com.finnflare.terminal.db_helper;
 
-import android.util.Log;
-
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
@@ -52,9 +50,6 @@ final class DB_Scan_Decoder {
                             ).toCharArray()
                     )
             );
-            Log.v("FF_TERMINAL_LOG",scanResult);
-            Log.v("FF_TERMINAL_LOG",scanResult.substring(0, 11));
-            Log.v("FF_TERMINAL_LOG", res.get(Tables.COLUMNS.COLUMN_GTIN));
             res.put(Tables.COLUMNS.COLUMN_SN, "");
             res.put(Tables.COLUMNS.COLUMN_RFID, scanResult);
         }

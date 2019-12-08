@@ -2,6 +2,7 @@ package com.finnflare.terminal.alien.scanner.driver;
 
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.database.Cursor;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -14,6 +15,9 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -27,8 +31,8 @@ import com.finnflare.terminal.db_helper.DB_RFID_Helper;
 import java.util.HashMap;
 
 public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallback {
+    private boolean scanningInProcess = false;
 
-    private String TAG = "FF_TERMINAL_LOG";
     private Handler handler = new Handler(new Handler.Callback(){
         @Override
         public boolean handleMessage(@NonNull Message msg) {
@@ -83,6 +87,14 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
 
     private void startScan() {
         if (!scanner.isScanning()) {
+            LinearLayout clickScanListLayout = findViewById(R.id.clickRFIDScanListLayout);
+            if( clickScanListLayout.getVisibility() == View.VISIBLE) {
+                clickScanListLayout.removeAllViews();
+                clickScanListLayout.setVisibility(View.GONE);
+            }
+            scanningInProcess = true;
+            Button scanBut = findViewById(R.id.scanRFIDProcessButton);
+            scanBut.setText(R.string.scanButElStopText);
             scanner.scan();
         }
     }
@@ -90,15 +102,16 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
     public synchronized void stopScan() {
         if (scanner.isScanning()) {
             scanner.stop();
+            scanningInProcess = false;
+            Button scanBut = findViewById(R.id.scanRFIDProcessButton);
+            scanBut.setText(R.string.scanButElStartText);
         }
     }
 
     public void onTagRead(Tag tag) {
         double rssi = tag.getRSSI();
-        Log.v(TAG, "RSSI - " + rssi);
         HashMap<String, String> scanData = db_helper.decodeScanResult(tag.getEPC());
         if(scanData != null){
-
             HashMap<String, String> good = db_helper.getGoodInfo(scanData);
             Bundle bundle = new Bundle();
 
@@ -111,7 +124,8 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
                         Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                         if( v != null){
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+                                v.vibrate(VibrationEffect.createOneShot(500,
+                                        VibrationEffect.DEFAULT_AMPLITUDE));
                             } else {
                                 v.vibrate(500);
                             }
@@ -150,7 +164,6 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
                     break;
                 }
             }
-
             Message msg = new Message();
             msg.setData(bundle);
             handler.sendMessage(msg);
@@ -181,6 +194,109 @@ public class Alien_RFID_Scanner extends AppCompatActivity implements RFIDCallbac
         return true;
     }
 
+    public void onStartStopClick(View view){
+        if(scanningInProcess)
+            stopScan();
+        else
+            startScan();
+    }
+
+    public void onWrongScansClick(View view){
+        try{
+        if (scanner.isScanning()) {
+            scanner.stop();
+        }
+
+        LinearLayout clickScanListLayout = findViewById(R.id.clickRFIDScanListLayout);
+
+        if( clickScanListLayout.getVisibility() == View.GONE){
+            Cursor cursor = db_helper.getWrongScansList();
+            if (cursor.moveToFirst()){
+                clickScanListLayout.setVisibility(View.VISIBLE);
+                while(!cursor.isAfterLast()){
+                    TextView wrongScanInfo = new TextView(this);
+                    wrongScanInfo.setText(
+                            (cursor.getString(cursor.getColumnIndex("_NAME")) != null ?
+                                    cursor.getString(
+                                            cursor.getColumnIndex("_NAME")
+                                    ).concat(
+                                            " : "
+                                    ).concat(
+                                            cursor.getString(
+                                                    cursor.getColumnIndex("_STATE_NAME"))
+                                    )
+                                    :
+                                    "Неизвестный товар \n".concat(
+                                            cursor.getString(
+                                                    cursor.getColumnIndex("_GTIN")
+                                            )
+                                    )
+                            )
+                    );
+                    wrongScanInfo.setTextColor(getResources().getColor(R.color.mainTextColor));
+                    wrongScanInfo.setTextSize(20);
+                    clickScanListLayout.addView(wrongScanInfo);
+
+                    wrongScanInfo = new TextView(this);
+                    wrongScanInfo.setText(
+                            cursor.getString(cursor.getColumnIndex("_QTYOUT")).concat(
+                                    " : ").concat(
+                                    cursor.getString(cursor.getColumnIndex("_QTYIN"))
+                            ));
+                    wrongScanInfo.setTextColor(getResources().getColor(R.color.errorsTextColor));
+                    wrongScanInfo.setTextSize(20);
+                    clickScanListLayout.addView(wrongScanInfo);
+
+                    cursor.moveToNext();
+                }
+            }
+        }
+        else {
+            clickScanListLayout.setVisibility(View.GONE);
+            clickScanListLayout.removeAllViews();
+        }}
+        catch( Exception e) {Log.v("FF_TERMINAL_LOG", e.toString());}
+    }
+
+    public void onRemainingScansClick(View view){
+        if (scanner.isScanning()) {
+            scanner.stop();
+        }
+
+        LinearLayout clickScanListLayout = findViewById(R.id.clickRFIDScanListLayout);
+
+        if( clickScanListLayout.getVisibility() == View.GONE){
+            Cursor cursor = db_helper.getRemainingScansList();
+            if (cursor.moveToFirst()){
+                clickScanListLayout.setVisibility(View.VISIBLE);
+                while(!cursor.isAfterLast()){
+                    TextView wrongScanInfo = new TextView(this);
+                    wrongScanInfo.setText(
+                            cursor.getString(cursor.getColumnIndex("_NAME")).concat(" : ").concat(
+                                    cursor.getString(cursor.getColumnIndex("_STATE_NAME")))
+                    );
+                    wrongScanInfo.setTextColor(getResources().getColor(R.color.mainTextColor));
+                    wrongScanInfo.setTextSize(20);
+                    clickScanListLayout.addView(wrongScanInfo);
+
+                    wrongScanInfo = new TextView(this);
+                    wrongScanInfo.setText(
+                            cursor.getString(cursor.getColumnIndex("_QTYOUT")).concat(" : ").concat(
+                                    cursor.getString(cursor.getColumnIndex("_QTYIN"))
+                            ));
+                    wrongScanInfo.setTextColor(getResources().getColor(R.color.qtyoutTextColor));
+                    wrongScanInfo.setTextSize(20);
+                    clickScanListLayout.addView(wrongScanInfo);
+
+                    cursor.moveToNext();
+                }
+            }
+        }
+        else {
+            clickScanListLayout.setVisibility(View.GONE);
+            clickScanListLayout.removeAllViews();
+        }
+    }
     @Override
     protected void onDestroy() {
         Alien_RFID_Scanner_Utils.deinit();

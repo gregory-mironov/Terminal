@@ -7,11 +7,149 @@
     android:keepScreenOn="true"
     tools:context=".Alien_Barcode_Scanner">
 
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:id="@+id/clickScanListLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </ScrollView>
+
+    <ScrollView
+        android:id="@+id/scrollView2"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/scanLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/goodName"
+                android:layout_width="300dp"
+                android:layout_height="70dp"
+                android:layout_marginTop="50dp"
+                android:text="@string/fullGoodName"
+                android:textColor="@color/mainTextColor"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/goodColor"
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/goodColorText"
+                android:textColor="@color/mainTextColor"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/goodName" />
+
+            <TextView
+                android:id="@+id/goodSize"
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/goodSizeText"
+                android:textColor="@color/mainTextColor"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/goodColor" />
+
+            <TextView
+                android:id="@+id/goodStateTextView"
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/gootStateText"
+                android:textColor="#EEF4D4"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/goodSize" />
+
+            <TextView
+                android:id="@+id/goodScanTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="80dp"
+                android:layout_marginTop="20dp"
+                android:text="0"
+                android:textColor="@color/qtyoutTextColor"
+                android:textSize="20sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/goodStateTextView" />
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="из"
+                android:textColor="@color/mainTextColor"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toStartOf="@+id/goodQTYINTextView"
+                app:layout_constraintStart_toEndOf="@+id/goodScanTextView"
+                app:layout_constraintTop_toBottomOf="@+id/goodStateTextView" />
+
+            <TextView
+                android:id="@+id/goodQTYINTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="80dp"
+                android:text="0"
+                android:textColor="@color/mainTextColor"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/goodStateTextView" />
+
+            <Button
+                android:id="@+id/revertBut"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:enabled="false"
+                android:onClick="onRevertScanClick"
+                android:text="@string/revertScan"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </ScrollView>
+
+
+
     <TextView
         android:id="@+id/wrongScanNum"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="40dp"
+        android:clickable="true"
+        android:onClick="onWrongScansClick"
         android:text="0"
         android:textColor="@color/errorsTextColor"
         android:textSize="22sp"
@@ -37,106 +175,12 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="15dp"
         android:layout_marginBottom="40dp"
+        android:clickable="true"
+        android:onClick="onRemainingScansClick"
         android:text="0"
         android:textColor="@color/mainTextColor"
         android:textSize="22sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/goodName"
-        android:layout_width="300dp"
-        android:layout_height="70dp"
-        android:layout_marginTop="50dp"
-        android:text="@string/fullGoodName"
-        android:textColor="@color/mainTextColor"
-        android:textSize="20sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/goodColor"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="@string/goodColorText"
-        android:textColor="@color/mainTextColor"
-        android:textSize="20sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/goodName" />
-
-    <TextView
-        android:id="@+id/goodSize"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="@string/goodSizeText"
-        android:textColor="@color/mainTextColor"
-        android:textSize="20sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/goodColor" />
-
-    <Button
-        android:id="@+id/revertBut"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:enabled="false"
-        android:onClick="onRevertScanClick"
-        android:text="@string/revertScan"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="из"
-        android:textColor="@color/mainTextColor"
-        android:textSize="20sp"
-        app:layout_constraintEnd_toStartOf="@+id/goodQTYINTextView"
-        app:layout_constraintStart_toEndOf="@+id/goodScanTextView"
-        app:layout_constraintTop_toBottomOf="@+id/goodStateTextView" />
-
-    <TextView
-        android:id="@+id/goodScanTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
-        android:layout_marginTop="10dp"
-        android:text="0"
-        android:textColor="@color/qtyoutTextColor"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/goodStateTextView" />
-
-    <TextView
-        android:id="@+id/goodQTYINTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="64dp"
-        android:text="0"
-        android:textColor="@color/mainTextColor"
-        android:textSize="20sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/goodStateTextView" />
-
-    <TextView
-        android:id="@+id/goodStateTextView"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="@string/gootStateText"
-        android:textColor="#EEF4D4"
-        android:textSize="20sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/goodSize" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

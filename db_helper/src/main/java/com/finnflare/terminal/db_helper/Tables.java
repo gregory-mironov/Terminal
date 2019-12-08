@@ -64,12 +64,14 @@ final class Tables {
                 "CONSTRAINT " + TABLE_PK + " PRIMARY KEY ( " +
                 COLUMNS.COLUMN_GUID + ", " +
                 COLUMNS.COLUMN_GTIN + ", " +
-                COLUMNS.COLUMN_SN +
+                COLUMNS.COLUMN_SN + ", " +
+                COLUMNS.COLUMN_STATE +
                 " ) " +
                 "ON CONFLICT ROLLBACK );";
         static final String TRUNCATE_TABLE = "DELETE FROM " + TABLE_NAME + ";";
 
-        static final String LOAD_FILE_NAME = "ff.inv.leftovers.json";
+        static final String LOAD_FILE_NAME_START = "ff.inv.leftovers";
+        static final String LOAD_FILE_NAME_END = ".json";
         static final String SAVE_FILE_NAME = "ff.inv.bc.result.json";
         static final String LOAD_FILE_PROCESS_TITLE = "Загрузка остатков товаров";
         static final String UPLOAD_FILE_PROCESS_TITLE = "Выгрузка остатков товаров";
@@ -91,7 +93,8 @@ final class Tables {
                 "CONSTRAINT " + TABLE_PK + " PRIMARY KEY ( " +
                 COLUMNS.COLUMN_GUID + ", " +
                 COLUMNS.COLUMN_GTIN + ", " +
-                COLUMNS.COLUMN_RFID +
+                COLUMNS.COLUMN_RFID + ", " +
+                COLUMNS.COLUMN_STATE +
                 " ) " +
                 "ON CONFLICT ROLLBACK );";
         static final String TRUNCATE_TABLE = "DELETE FROM " + TABLE_NAME + ";";
